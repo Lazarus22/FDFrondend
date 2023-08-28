@@ -24,7 +24,7 @@ const FlavorVisualizer = () => {
   useEffect(() => {
     const fetchData = async () => {
       const responses = await Promise.all(
-        flavors.map((flavor) => fetch(`http://localhost:8080/recommend?flavor=${flavor}`))
+        flavors.map((flavor) => fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`))
       );
       const data = await Promise.all(responses.map((res) => res.json()));
       setRecommendations(data.map((d) => (d.recommendations ? d.recommendations : [])));
