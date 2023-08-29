@@ -5,11 +5,6 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Enforce HTTPS
-if (window.location.protocol !== 'https:') {
-  window.location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-}
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
