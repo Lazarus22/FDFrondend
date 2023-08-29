@@ -6,7 +6,7 @@ const FlavorVisualizer = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const searchbarHeight = 50;
-  const [height, setHeight] = useState(window.innerHeight - searchbarHeight);
+  const [height, setHeight] = useState(() => window.innerHeight - searchbarHeight);
 
   const handleSearch = () => {
     setFlavors([searchInput]);
@@ -22,6 +22,7 @@ const FlavorVisualizer = () => {
   }, []);
 
   useEffect(() => {
+    if (flavors.length === 0) return;
     const fetchData = async () => {
       const responses = await Promise.all(
         flavors.map((flavor) => fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`))
