@@ -131,7 +131,7 @@ const FlavorVisualizer = () => {
       simulation.alphaTarget(0); // Gradually stop the simulation
     }
 
-  }, [recommendations]);
+  }, [recommendations, height]);
 
   return (
     <div>
