@@ -28,8 +28,8 @@
     const links = data.recommendations.map(recommendation => ({ source: flavor, target: recommendation, value: 1 }));
     height = window.innerHeight - 50;
     const nodes = Array.from(new Set(links.flatMap(l => [l.source, l.target])), id => ({ id }));
-    const dynamicLinkDistance = Math.sqrt(nodes.length) * 20;
-    const dynamicCharge = -Math.sqrt(nodes.length) * 50;
+    const dynamicLinkDistance = Math.sqrt(nodes.length) * 10;
+    const dynamicCharge = -Math.sqrt(nodes.length) * 60;
 
     const svg = d3.select('#visualization').html('')
                   .append('svg').attr('width', '100%').attr('height', height);
