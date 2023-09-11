@@ -29,13 +29,18 @@
     const flavor = data.flavor;
     const links = data.recommendations.map((recommendation) => ({
       source: flavor,
-      target: recommendation,
+      target: recommendation.name,  // use 'name' as the identifier
       value: 1,
+      relationshipType: recommendation.relationshipType,
+      nodeType: recommendation.nodeType // add nodeType
     }));
-    height = window.innerHeight - 50;
+
     const nodes = Array.from(
       new Set(links.flatMap((l) => [l.source, l.target])),
-      (id) => ({ id })
+      (id) => ({
+        id,
+        nodeType: links.find(l => l.target === id)?.nodeType // enrich node with nodeType
+      })
     );
     const dynamicLinkDistance = Math.sqrt(nodes.length) * 10;
     const dynamicCharge = -Math.sqrt(nodes.length) * 60;
