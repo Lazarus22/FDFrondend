@@ -78,23 +78,26 @@
       .join("line")
       .attr("stroke-width", (d) => Math.sqrt(d.value));
 
-    const node = container
+      const node = container
       .append("g")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
       .selectAll("g")
       .data(nodes)
       .join("g")
+      .attr("class", (d) => d.nodeType)  // Add class for styling
       .call(d3.drag().on("start", dragstarted).on("drag", dragged));
 
-    node.append("circle").attr("r", 5).attr("fill", "#6699cc");
-    node
+      node.append("circle")
+      .attr("r", 5)
+      .attr("fill", (d) => (d.nodeType === "Ingredient" ? "#6699cc" : "#cc9966"));
+      node
       .append("text")
       .attr("stroke", "none")
       .attr("fill", "#000")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
-      .text((d) => d.id);
+      .text((d) => `${d.id} (${d.nodeType})`);  // Display both 'id' and 'nodeType'
 
     simulation.on("tick", () => {
       link
