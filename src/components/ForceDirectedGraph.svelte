@@ -27,13 +27,24 @@
 
   function renderVisualization(data) {
     const flavor = data.flavor;
-    const links = data.recommendations.map((recommendation) => ({
-      source: flavor,
-      target: recommendation.name,  // use 'name' as the identifier
-      value: 1,
-      relationshipType: recommendation.relationshipType,
-      nodeType: recommendation.nodeType // add nodeType
-    }));
+  
+    // Create an initial nodes array with the flavor node
+    const initialNodes = [{ id: flavor, nodeType: 'Flavor' }];
+  
+    // Create the links and enrich nodes array with the target nodes
+    const links = [];
+    data.recommendations.forEach((recommendation) => {
+      const targetNode = {
+        id: recommendation.name,
+        nodeType: recommendation.nodeType,
+      };
+      links.push({
+        source: initialNodes[0], // reference to the exact 'flavor' node object
+        target: targetNode, // reference to the new target node object
+        value: 1,
+      });
+      initialNodes.push(targetNode); // add the new node to the nodes array
+    });
 
     const nodes = Array.from(
       new Set(links.flatMap((l) => [l.source, l.target])),
