@@ -65,17 +65,15 @@
       .attr("r", 5)
       .attr("fill", "#69b3a2");
 
-    const labels = svg
-      .append("g")
-      .selectAll("text")
-      .data(nodes)
-      .enter()
-      .append("text")
-      .attr("dx", 15)
-      .attr("dy", ".35em")
-      .attr("font-size", "12px")
-      .attr("font-family", "Arial, Helvetica, sans-serif")
-      .text((d) => d.name);
+      const labels = svg.append("g")
+  .selectAll("text")
+  .data(nodes)
+  .enter().append("text")
+  .attr("text-anchor", "middle")  // Center the text
+  .attr("dy", ".35em")
+  .attr("font-size", "12px")
+  .attr("font-family", "Arial, Helvetica, sans-serif")
+  .text((d) => d.name);
 
     const zoom = d3
       .zoom()
