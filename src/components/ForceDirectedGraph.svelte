@@ -65,7 +65,10 @@
       .append("circle")
       .attr("r", 5)
       .attr("fill", "#69b3a2")
-      .on("dblclick", (event, d) => fetchDataAndUpdate(d.name));
+      .on("dblclick", (event, d) => {
+        event.stopPropagation(); // Stop event propagation
+        fetchDataAndUpdate(d.name);
+      });
 
     const labels = svg
       .append("g")
