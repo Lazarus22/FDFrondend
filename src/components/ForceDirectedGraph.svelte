@@ -66,7 +66,7 @@
     });
 
     // Remove links connected to the flavor to be collapsed
-    links = links.filter((link) => !linksToRemove.includes(link));
+    links = links.filter((link) => !linksToRemove.some(ltr => ltr.source.name === link.source.name && ltr.target.name === link.target.name));
 
     expandedNodes.delete(flavor);
   }
