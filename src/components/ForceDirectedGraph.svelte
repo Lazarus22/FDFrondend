@@ -90,6 +90,7 @@
       .attr("dy", ".35em")
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
+      .attr("pointer-events", "none") // Make text non-interactive
       .text((d) => d.name);
 
     const zoom = d3
