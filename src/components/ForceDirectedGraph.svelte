@@ -48,30 +48,34 @@
     link.source.name === flavor ? link.target.name : link.source.name
   );
 
+  // Remove links connected to the flavor to be collapsed
+  links = links.filter((link) => {
+    return !(
+      (link.source.name === flavor || link.target.name === flavor) &&
+      !Array.from(expandedNodes).some(
+        (expandedNode) =>
+          link.source.name === expandedNode || link.target.name === expandedNode
+      )
+    );
+  });
+
   // Remove nodes that are not connected to any other expanded node
   nodes = nodes.filter((node) => {
     return (
-      node.name === flavor || // Keep the node that is being collapsed
-      (
-        !nodesToRemove.includes(node.name) ||
-        Array.from(expandedNodes).some((expandedNode) =>
-          links.some(
-            (link) =>
-              (link.source.name === expandedNode &&
-                link.target.name === node.name) ||
-              (link.target.name === expandedNode &&
-                link.source.name === node.name)
-          )
+      !nodesToRemove.includes(node.name) ||
+      Array.from(expandedNodes).some((expandedNode) =>
+        links.some(
+          (link) =>
+            (link.source.name === expandedNode && link.target.name === node.name) ||
+            (link.target.name === expandedNode && link.source.name === node.name)
         )
       )
     );
   });
 
-  // Remove links connected to the flavor to be collapsed
-  links = links.filter((link) => !linksToRemove.includes(link));
-
   expandedNodes.delete(flavor);
 }
+
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
