@@ -17,8 +17,6 @@
 
     let nodes = [{ name: data.flavor, nodeType: "Flavor" }];
     let links = [];
-    let clickedOnce = false;
-    let timer;
 
     data.recommendations.forEach((rec) => {
       nodes.push({ name: rec.name, nodeType: rec.nodeType });
@@ -67,17 +65,8 @@
       .append("circle")
       .attr("r", 5)
       .attr("fill", "#69b3a2")
-      .on("click", (event, d) => {
-        if (clickedOnce) {
-          clearTimeout(timer);
-          clickedOnce = false;
-          fetchDataAndUpdate(d.name);
-        } else {
-          clickedOnce = true;
-          timer = setTimeout(() => {
-            clickedOnce = false;
-          }, 300);
-        }
+      .on("dblclick", (event, d) => {
+        fetchDataAndUpdate(d.name);
       });
 
     const labels = svg
