@@ -8,54 +8,66 @@
   let links = [];
 
   async function fetchDataAndUpdate(flavor) {
-    if (expandedNodes.has(flavor)) {
-      // Collapse the node if it's already expanded
-      nodes = nodes.filter(
-        (node) =>
-          node.name !== flavor &&
-          node.source !== flavor &&
-          node.target !== flavor
-      );
-      links = links.filter(
-        (link) => link.source.name !== flavor && link.target.name !== flavor
-      );
-      expandedNodes.delete(flavor);
-    } else {
-      // Expand the node
-      const res = await fetch(
-        `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-      );
-      const data = await res.json();
+  if (expandedNodes.has(flavor)) {
+    // Collapse the node if it's already expanded
+    const nodesToRemove = nodes.filter(
+      (node) => node.source === flavor || node.target === flavor
+    );
 
-      // Add the new node if it doesn't already exist
-      if (!nodes.some((node) => node.name === data.flavor)) {
-        nodes.push({ name: data.flavor, nodeType: "Flavor" });
-      }
-      expandedNodes.add(data.flavor);
+    nodes = nodes.filter((node) => {
+      return !nodesToRemove.some((ntr) => ntr.name === node.name) ||
+        Array.from(expandedNodes).some(
+          (expandedNode) => node.source === expandedNode || node.target === expandedNode
+        );
+    });
 
-      // Add the new links and nodes, filtering out duplicates
-      data.recommendations.forEach((rec) => {
-        if (!nodes.some((node) => node.name === rec.name)) {
-          nodes.push({ name: rec.name, nodeType: rec.nodeType });
-        }
-        if (
-          !links.some(
-            (link) =>
-              link.source.name === data.flavor && link.target.name === rec.name
-          )
-        ) {
-          links.push({
-            source: data.flavor,
-            target: rec.name,
-            strength: rec.strength,
-            relationshipType: rec.relationshipType,
-          });
-        }
-      });
+    links = links.filter((link) => {
+      return (
+        link.source.name !== flavor && link.target.name !== flavor ||
+        Array.from(expandedNodes).some(
+          (expandedNode) => link.source.name === expandedNode || link.target.name === expandedNode
+        )
+      );
+    });
+
+    expandedNodes.delete(flavor);
+  } else {
+    // Expand the node
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
+    const data = await res.json();
+
+    // Add the new node if it doesn't already exist
+    if (!nodes.some((node) => node.name === data.flavor)) {
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
     }
+    expandedNodes.add(data.flavor);
 
-    updateGraph();
+    // Add the new links and nodes, filtering out duplicates
+    data.recommendations.forEach((rec) => {
+      if (!nodes.some((node) => node.name === rec.name)) {
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+      }
+      if (
+        !links.some(
+          (link) =>
+            link.source.name === data.flavor && link.target.name === rec.name
+        )
+      ) {
+        links.push({
+          source: data.flavor,
+          target: rec.name,
+          strength: rec.strength,
+          relationshipType: rec.relationshipType,
+        });
+      }
+    });
   }
+
+  updateGraph();
+}
+
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
