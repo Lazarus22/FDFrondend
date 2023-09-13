@@ -37,21 +37,22 @@
       }
     });
   }
-
   function collapseNode(flavor) {
-    // Identify links that are connected to the flavor to be collapsed
-    const linksToRemove = links.filter(
-      (link) => link.source.name === flavor || link.target.name === flavor
-    );
+  // Identify links that are connected to the flavor to be collapsed
+  const linksToRemove = links.filter(
+    (link) => link.source.name === flavor || link.target.name === flavor
+  );
 
-    // Identify nodes that are connected to the flavor to be collapsed
-    const nodesToRemove = linksToRemove.map((link) =>
-      link.source.name === flavor ? link.target.name : link.source.name
-    );
+  // Identify nodes that are connected to the flavor to be collapsed
+  const nodesToRemove = linksToRemove.map((link) =>
+    link.source.name === flavor ? link.target.name : link.source.name
+  );
 
-    // Remove nodes that are not connected to any other expanded node
-    nodes = nodes.filter((node) => {
-      return (
+  // Remove nodes that are not connected to any other expanded node
+  nodes = nodes.filter((node) => {
+    return (
+      node.name === flavor || // Keep the node that is being collapsed
+      (
         !nodesToRemove.includes(node.name) ||
         Array.from(expandedNodes).some((expandedNode) =>
           links.some(
@@ -62,14 +63,15 @@
                 link.source.name === node.name)
           )
         )
-      );
-    });
+      )
+    );
+  });
 
-    // Remove links connected to the flavor to be collapsed
-    links = links.filter((link) => !linksToRemove.some(ltr => ltr.source.name === link.source.name && ltr.target.name === link.target.name));
+  // Remove links connected to the flavor to be collapsed
+  links = links.filter((link) => !linksToRemove.includes(link));
 
-    expandedNodes.delete(flavor);
-  }
+  expandedNodes.delete(flavor);
+}
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
