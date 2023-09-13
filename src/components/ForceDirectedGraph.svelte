@@ -4,14 +4,15 @@
 
   let flavor = "";
 
-  async function updateGraph() {
-    if (!flavor) return;
-
+  async function fetchDataAndUpdate(flavor) {
     const res = await fetch(
       `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
     );
     const data = await res.json();
+    updateGraph(data);
+  }
 
+  function updateGraph(data) {
     d3.select("#forceGraph").selectAll("*").remove();
 
     let nodes = [{ name: data.flavor, nodeType: "Flavor" }];
@@ -63,17 +64,20 @@
       .enter()
       .append("circle")
       .attr("r", 5)
-      .attr("fill", "#69b3a2");
+      .attr("fill", "#69b3a2")
+      .on("dblclick", (event, d) => fetchDataAndUpdate(d.name));
 
-      const labels = svg.append("g")
-  .selectAll("text")
-  .data(nodes)
-  .enter().append("text")
-  .attr("text-anchor", "middle")  // Center the text
-  .attr("dy", ".35em")
-  .attr("font-size", "12px")
-  .attr("font-family", "Arial, Helvetica, sans-serif")
-  .text((d) => d.name);
+    const labels = svg
+      .append("g")
+      .selectAll("text")
+      .data(nodes)
+      .enter()
+      .append("text")
+      .attr("text-anchor", "middle") // Center the text
+      .attr("dy", ".35em")
+      .attr("font-size", "12px")
+      .attr("font-family", "Arial, Helvetica, sans-serif")
+      .text((d) => d.name);
 
     const zoom = d3
       .zoom()
@@ -96,14 +100,13 @@
       labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
     });
   }
-
-  onMount(updateGraph);
+  onMount(() => fetchDataAndUpdate(flavor));
 </script>
 
 <input
   type="text"
   bind:value={flavor}
   placeholder="Enter flavor"
-  on:input={updateGraph}
+  on:input={() => fetchDataAndUpdate(flavor)}
 />
 <svg id="forceGraph" />
