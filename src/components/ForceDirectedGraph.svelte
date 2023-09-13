@@ -3,63 +3,62 @@
   import * as d3 from "d3";
 
   let flavor = "";
-  let expandedNodes = new Set();  // To keep track of expanded nodes
+  let expandedNodes = new Set(); // To keep track of expanded nodes
   let nodes = [];
   let links = [];
 
   async function fetchDataAndUpdate(flavor) {
-  if (expandedNodes.has(flavor)) {
-    // Collapse the node if it's already expanded
-    nodes = nodes.filter(node => node.name !== flavor && node.source !== flavor && node.target !== flavor);
-    links = links.filter(link => link.source.name !== flavor && link.target.name !== flavor);
-    expandedNodes.delete(flavor);
-  } else {
-    // Expand the node
-    const res = await fetch(
-      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-    );
-    const data = await res.json();
+    if (expandedNodes.has(flavor)) {
+      // Collapse the node if it's already expanded
+      nodes = nodes.filter(
+        (node) =>
+          node.name !== flavor &&
+          node.source !== flavor &&
+          node.target !== flavor
+      );
+      links = links.filter(
+        (link) => link.source.name !== flavor && link.target.name !== flavor
+      );
+      expandedNodes.delete(flavor);
+    } else {
+      // Expand the node
+      const res = await fetch(
+        `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+      );
+      const data = await res.json();
 
-    // Add the new node if it doesn't already exist
-    if (!nodes.some(node => node.name === data.flavor)) {
-      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+      // Add the new node if it doesn't already exist
+      if (!nodes.some((node) => node.name === data.flavor)) {
+        nodes.push({ name: data.flavor, nodeType: "Flavor" });
+      }
+      expandedNodes.add(data.flavor);
+
+      // Add the new links and nodes, filtering out duplicates
+      data.recommendations.forEach((rec) => {
+        if (!nodes.some((node) => node.name === rec.name)) {
+          nodes.push({ name: rec.name, nodeType: rec.nodeType });
+        }
+        if (
+          !links.some(
+            (link) =>
+              link.source.name === data.flavor && link.target.name === rec.name
+          )
+        ) {
+          links.push({
+            source: data.flavor,
+            target: rec.name,
+            strength: rec.strength,
+            relationshipType: rec.relationshipType,
+          });
+        }
+      });
     }
-    expandedNodes.add(data.flavor);
 
-    // Add the new links and nodes, filtering out duplicates
-    data.recommendations.forEach((rec) => {
-      if (!nodes.some(node => node.name === rec.name)) {
-        nodes.push({ name: rec.name, nodeType: rec.nodeType });
-      }
-      if (!links.some(link => link.source.name === data.flavor && link.target.name === rec.name)) {
-        links.push({
-          source: data.flavor,
-          target: rec.name,
-          strength: rec.strength,
-          relationshipType: rec.relationshipType,
-        });
-      }
-    });
+    updateGraph();
   }
 
-  updateGraph();
-}
-
-  function updateGraph(data) {
+  function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
-
-    let nodes = [{ name: data.flavor, nodeType: "Flavor" }];
-    let links = [];
-
-    data.recommendations.forEach((rec) => {
-      nodes.push({ name: rec.name, nodeType: rec.nodeType });
-      links.push({
-        source: data.flavor,
-        target: rec.name,
-        strength: rec.strength,
-        relationshipType: rec.relationshipType,
-      });
-    });
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -70,11 +69,11 @@
       .attr("height", height);
 
     const simulation = d3
-      .forceSimulation(nodes)
+      .forceSimulation(nodes) // Use global nodes
       .force(
         "link",
         d3
-          .forceLink(links)
+          .forceLink(links) // Use global links
           .id((d) => d.name)
           .distance(100)
       )
