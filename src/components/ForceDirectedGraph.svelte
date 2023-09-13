@@ -148,7 +148,6 @@
 const zoom = d3
   .zoom()
   .scaleExtent([0.1, 10])
-  .filter(() => !d3.event.button && d3.event.type !== 'dblclick')  // Filter out double-click
   .on("zoom", (event) => {
     svg.selectAll("g").attr("transform", event.transform);
   });
