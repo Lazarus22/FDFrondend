@@ -6,7 +6,6 @@
   let expandedNodes = new Set(); // To keep track of expanded nodes
   let nodes = [];
   let links = [];
-  let simulation;
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
@@ -55,13 +54,6 @@
       });
     }
 
-    // Restart the simulation with new data
-    if (simulation) {
-      simulation.nodes(nodes);
-      simulation.force("link").links(links);
-      simulation.alpha(1).restart();
-    }
-
     updateGraph();
   }
 
@@ -76,12 +68,12 @@
       .attr("width", width)
       .attr("height", height);
 
-    simulation = d3
-      .forceSimulation(nodes)
+    const simulation = d3
+      .forceSimulation(nodes) // Use global nodes
       .force(
         "link",
         d3
-          .forceLink(links)
+          .forceLink(links) // Use global links
           .id((d) => d.name)
           .distance(100)
       )
@@ -94,11 +86,8 @@
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", (d) => {
-        const scale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]);
-        return scale(d.strength);
-      })
-      .attr("stroke-width", 2);
+      .attr("stroke", "#999")
+      .attr("stroke-width", (d) => d.strength);
 
     const node = svg
       .append("g")
@@ -118,11 +107,11 @@
       .data(nodes)
       .enter()
       .append("text")
-      .attr("text-anchor", "middle")
+      .attr("text-anchor", "middle") // Center the text
       .attr("dy", ".35em")
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("pointer-events", "none")
+      .attr("pointer-events", "none") // Make text non-interactive
       .text((d) => d.name);
 
     const zoom = d3
@@ -146,7 +135,6 @@
       labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
     });
   }
-
   onMount(() => fetchDataAndUpdate(flavor));
 </script>
 
