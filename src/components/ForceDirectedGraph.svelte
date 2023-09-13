@@ -62,6 +62,9 @@
 
     const width = window.innerWidth;
     const height = window.innerHeight;
+    const numNodes = nodes.length;
+    const repulsionStrength = numNodes > 50 ? -800 : -500;
+    const linkDistance = numNodes > 50 ? 200 : 100;
 
     const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Light gray to black
 
@@ -77,10 +80,12 @@
         d3
           .forceLink(links)
           .id((d) => d.name)
-          .distance(200) // Increase this value
+          .distance(linkDistance)
       )
-      .force("charge", d3.forceManyBody().strength(-1000)) // Make this value more negative
-      .force("center", d3.forceCenter(width / 2, height / 2));
+      .force("charge", d3.forceManyBody().strength(repulsionStrength))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .alphaDecay(0.02)
+      .velocityDecay(0.6);
 
     const link = svg
       .append("g")
