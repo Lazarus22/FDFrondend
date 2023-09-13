@@ -3,7 +3,6 @@
 </script>
 
 <main>
-  <h1>Force Directed Graph Example</h1>
   <ForceDirectedGraph />
 </main>
 
@@ -15,7 +14,4 @@
     margin: 0;
   }
 
-  h1 {
-    color: #333;
-  }
 </style>
