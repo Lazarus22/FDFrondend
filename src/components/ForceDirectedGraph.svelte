@@ -1,119 +1,58 @@
 <script>
+  import { onMount } from "svelte";
   import * as d3 from "d3";
-  import { flavors } from "../stores";
 
-  let height;
+  let flavor = ""; // No default flavor
 
-  $: flavors.subscribe(async (currentFlavors) => {
-    if (currentFlavors && currentFlavors.length > 0) {
-      const flavor = currentFlavors[0];
-      await fetchData(flavor);
-    }
-  });
+  async function updateGraph() {
+    if (!flavor) return; // Don't fetch if no flavor is entered
 
-  async function fetchData(flavor) {
-    try {
-      const res = await fetch(
-        `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-      );
-      const data = await res.json();
-      if (data && data.recommendations) {
-        renderVisualization(data);
-      }
-    } catch (error) {
-      console.log("Error fetching data:", error);
-    }
-  }
+    const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
+    const data = await res.json();
 
-  function renderVisualization(data) {
-    const flavor = data.flavor;
-  
-    // Create an initial nodes array with the flavor node
-    const initialNodes = [{ id: flavor, nodeType: 'Flavor' }];
-  
-    // Create the links and enrich nodes array with the target nodes
-    const links = [];
-    data.recommendations.forEach((recommendation) => {
-      const targetNode = {
-        id: recommendation.name,
-        nodeType: recommendation.nodeType,
-      };
+    // Clear previous graph
+    d3.select("#forceGraph").selectAll("*").remove();
+
+    // Prepare data and draw graph
+    let nodes = [{ name: data.flavor, nodeType: "Flavor" }];
+    let links = [];
+
+    data.recommendations.forEach((rec) => {
+      nodes.push({ name: rec.name, nodeType: rec.nodeType });
       links.push({
-        source: initialNodes[0], // reference to the exact 'flavor' node object
-        target: targetNode, // reference to the new target node object
-        value: 1,
+        source: data.flavor,
+        target: rec.name,
+        strength: rec.strength,
+        relationshipType: rec.relationshipType,
       });
-      initialNodes.push(targetNode); // add the new node to the nodes array
     });
 
-    const nodes = Array.from(
-      new Set(links.flatMap((l) => [l.source, l.target])),
-      (id) => ({
-        id,
-        nodeType: links.find(l => l.target === id)?.nodeType // enrich node with nodeType
-      })
-    );
-    const dynamicLinkDistance = Math.sqrt(nodes.length) * 10;
-    const dynamicCharge = -Math.sqrt(nodes.length) * 60;
+    const svg = d3.select("#forceGraph");
+    const width = 600;
+    const height = 600;
 
-    const svg = d3
-      .select("#visualization")
-      .html("")
-      .append("svg")
-      .attr("width", "100%")
-      .attr("height", height);
+    svg.attr("width", width).attr("height", height);
 
-    const container = svg.append("g");
-    const width = window.innerWidth;
-
-    // Add zoom functionality
-    svg.call(
-      d3.zoom().on("zoom", (event) => {
-        container.attr("transform", event.transform);
-      })
-    );
-
-    const simulation = d3
-      .forceSimulation(nodes)
-      .force(
-        "link",
-        d3
-          .forceLink(links)
-          .id((d) => d.id)
-          .distance(dynamicLinkDistance)
-      )
-      .force("charge", d3.forceManyBody().strength(dynamicCharge))
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id((d) => d.name))
+      .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    const link = container
-      .append("g")
-      .attr("stroke", "#999")
-      .attr("stroke-opacity", 0.6)
+    const link = svg
       .selectAll("line")
       .data(links)
-      .join("line")
-      .attr("stroke-width", (d) => Math.sqrt(d.value));
+      .enter()
+      .append("line")
+      .attr("stroke", "#999")
+      .attr("stroke-width", (d) => d.strength);
 
-      const node = container
-      .append("g")
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5)
-      .selectAll("g")
+    const node = svg
+      .selectAll("circle")
       .data(nodes)
-      .join("g")
-      .attr("class", (d) => d.nodeType)  // Add class for styling
-      .call(d3.drag().on("start", dragstarted).on("drag", dragged));
-
-      node.append("circle")
+      .enter()
+      .append("circle")
       .attr("r", 5)
-      .attr("fill", (d) => (d.nodeType === "Ingredient" ? "#6699cc" : "#cc9966"));
-      node
-      .append("text")
-      .attr("stroke", "none")
-      .attr("fill", "#000")
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .text((d) => `${d.id} (${d.nodeType})`);  // Display both 'id' and 'nodeType'
+      .attr("fill", "#69b3a2");
 
     simulation.on("tick", () => {
       link
@@ -121,20 +60,13 @@
         .attr("y1", (d) => d.source.y)
         .attr("x2", (d) => d.target.x)
         .attr("y2", (d) => d.target.y);
-      node.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+
+      node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
     });
-
-    function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-      d.fx = event.x;
-      d.fy = event.y;
-    }
   }
+
+  onMount(updateGraph);
 </script>
 
-<div id="visualization" />
+<input type="text" bind:value={flavor} placeholder="Enter flavor" on:input={updateGraph} />
+<svg id="forceGraph"></svg>

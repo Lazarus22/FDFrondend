@@ -1,18 +1,21 @@
 <script>
   import ForceDirectedGraph from './components/ForceDirectedGraph.svelte';
-  import { flavors } from './stores';
-  
-  let searchInput = '';
-
-  function handleSearch() {
-    flavors.set([searchInput]);
-    console.log(`Set flavor in store: ${searchInput}`);
-  }
 </script>
 
-<div>
-  <input type="text" bind:value={searchInput} placeholder="Search for a flavor..." />
-  <button on:click={handleSearch}>Search</button>
-</div>
+<main>
+  <h1>Force Directed Graph Example</h1>
+  <ForceDirectedGraph />
+</main>
 
-<ForceDirectedGraph />
+<style>
+  main {
+    text-align: center;
+    padding: 1em;
+    max-width: 240px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    color: #333;
+  }
+</style>
