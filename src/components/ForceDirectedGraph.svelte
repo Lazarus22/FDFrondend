@@ -8,7 +8,9 @@
   let links = [];
 
   async function expandNode(flavor) {
-    const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
     const data = await res.json();
 
     if (!nodes.some((node) => node.name === data.flavor)) {
@@ -20,7 +22,12 @@
       if (!nodes.some((node) => node.name === rec.name)) {
         nodes.push({ name: rec.name, nodeType: rec.nodeType });
       }
-      if (!links.some((link) => link.source.name === data.flavor && link.target.name === rec.name)) {
+      if (
+        !links.some(
+          (link) =>
+            link.source.name === data.flavor && link.target.name === rec.name
+        )
+      ) {
         links.push({
           source: data.flavor,
           target: rec.name,
@@ -32,27 +39,33 @@
   }
 
   function collapseNode(flavor) {
+    // Identify links that are connected to the flavor to be collapsed
     const linksToRemove = links.filter(
       (link) => link.source.name === flavor || link.target.name === flavor
     );
 
+    // Identify nodes that are connected to the flavor to be collapsed
     const nodesToRemove = linksToRemove.map((link) =>
       link.source.name === flavor ? link.target.name : link.source.name
     );
 
+    // Remove nodes that are not connected to any other expanded node
     nodes = nodes.filter((node) => {
       return (
         !nodesToRemove.includes(node.name) ||
         Array.from(expandedNodes).some((expandedNode) =>
           links.some(
             (link) =>
-              (link.source.name === expandedNode && link.target.name === node.name) ||
-              (link.target.name === expandedNode && link.source.name === node.name)
+              (link.source.name === expandedNode &&
+                link.target.name === node.name) ||
+              (link.target.name === expandedNode &&
+                link.source.name === node.name)
           )
         )
       );
     });
 
+    // Remove links connected to the flavor to be collapsed
     links = links.filter((link) => !linksToRemove.includes(link));
 
     expandedNodes.delete(flavor);
