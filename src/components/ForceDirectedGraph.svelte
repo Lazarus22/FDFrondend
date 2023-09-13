@@ -69,15 +69,15 @@
       .attr("height", height);
 
     const simulation = d3
-      .forceSimulation(nodes) // Use global nodes
+      .forceSimulation(nodes)
       .force(
         "link",
         d3
-          .forceLink(links) // Use global links
+          .forceLink(links)
           .id((d) => d.name)
-          .distance(100)
+          .distance(200) // Increase this value
       )
-      .force("charge", d3.forceManyBody().strength(-500))
+      .force("charge", d3.forceManyBody().strength(-1000)) // Make this value more negative
       .force("center", d3.forceCenter(width / 2, height / 2));
 
     const link = svg
