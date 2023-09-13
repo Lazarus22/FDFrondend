@@ -6,6 +6,7 @@
   let expandedNodes = new Set(); // To keep track of expanded nodes
   let nodes = [];
   let links = [];
+  let simulation;
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
@@ -54,6 +55,13 @@
       });
     }
 
+    // Restart the simulation with new data
+    if (simulation) {
+      simulation.nodes(nodes);
+      simulation.force("link").links(links);
+      simulation.alpha(1).restart();
+    }
+
     updateGraph();
   }
 
@@ -62,30 +70,23 @@
 
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const numNodes = nodes.length;
-    const repulsionStrength = numNodes > 50 ? -800 : -500;
-    const linkDistance = numNodes > 50 ? 200 : 100;
-
-    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Light gray to black
 
     const svg = d3
       .select("#forceGraph")
       .attr("width", width)
       .attr("height", height);
 
-    const simulation = d3
+    simulation = d3
       .forceSimulation(nodes)
       .force(
         "link",
         d3
           .forceLink(links)
           .id((d) => d.name)
-          .distance(linkDistance)
+          .distance(100)
       )
-      .force("charge", d3.forceManyBody().strength(repulsionStrength))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .alphaDecay(0.02)
-      .velocityDecay(0.6);
+      .force("charge", d3.forceManyBody().strength(-500))
+      .force("center", d3.forceCenter(width / 2, height / 2));
 
     const link = svg
       .append("g")
@@ -93,8 +94,11 @@
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", (d) => colorScale(d.strength)) // Use the color scale
-      .attr("stroke-width", 2); // Set a uniform stroke width
+      .attr("stroke", (d) => {
+        const scale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]);
+        return scale(d.strength);
+      })
+      .attr("stroke-width", 2);
 
     const node = svg
       .append("g")
@@ -114,11 +118,11 @@
       .data(nodes)
       .enter()
       .append("text")
-      .attr("text-anchor", "middle") // Center the text
+      .attr("text-anchor", "middle")
       .attr("dy", ".35em")
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("pointer-events", "none") // Make text non-interactive
+      .attr("pointer-events", "none")
       .text((d) => d.name);
 
     const zoom = d3
@@ -142,6 +146,7 @@
       labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
     });
   }
+
   onMount(() => fetchDataAndUpdate(flavor));
 </script>
 
