@@ -2,18 +2,16 @@
   import { onMount } from "svelte";
   import * as d3 from "d3";
 
-  let flavor = ""; // No default flavor
+  let flavor = "";
 
   async function updateGraph() {
-    if (!flavor) return; // Don't fetch if no flavor is entered
+    if (!flavor) return;
 
     const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
     const data = await res.json();
 
-    // Clear previous graph
     d3.select("#forceGraph").selectAll("*").remove();
 
-    // Prepare data and draw graph
     let nodes = [{ name: data.flavor, nodeType: "Flavor" }];
     let links = [];
 
@@ -27,32 +25,39 @@
       });
     });
 
-    const svg = d3.select("#forceGraph");
-    const width = 600;
-    const height = 600;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-    svg.attr("width", width).attr("height", height);
+    const svg = d3.select("#forceGraph")
+      .attr("width", width)
+      .attr("height", height);
 
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(links).id((d) => d.name))
       .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    const link = svg
+    const link = svg.append("g")
       .selectAll("line")
       .data(links)
-      .enter()
-      .append("line")
+      .enter().append("line")
       .attr("stroke", "#999")
       .attr("stroke-width", (d) => d.strength);
 
-    const node = svg
+    const node = svg.append("g")
       .selectAll("circle")
       .data(nodes)
-      .enter()
-      .append("circle")
+      .enter().append("circle")
       .attr("r", 5)
       .attr("fill", "#69b3a2");
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        svg.selectAll("g").attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
 
     simulation.on("tick", () => {
       link
