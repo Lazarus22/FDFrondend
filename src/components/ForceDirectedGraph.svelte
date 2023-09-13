@@ -51,6 +51,14 @@
       .attr("r", 5)
       .attr("fill", "#69b3a2");
 
+    const labels = svg.append("g")
+      .selectAll("text")
+      .data(nodes)
+      .enter().append("text")
+      .attr("dx", 12)
+      .attr("dy", ".35em")
+      .text((d) => d.name);
+
     const zoom = d3.zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
@@ -61,13 +69,15 @@
 
     simulation.on("tick", () => {
       link
-        .attr("x1", (d) => d.source.x)
-        .attr("y1", (d) => d.source.y)
-        .attr("x2", (d) => d.target.x)
-        .attr("y2", (d) => d.target.y);
+      .attr("x1", (d) => d.source.x)
+      .attr("y1", (d) => d.source.y)
+      .attr("x2", (d) => d.target.x)
+      .attr("y2", (d) => d.target.y);
 
-      node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-    });
+    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+  
+    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+      });
   }
 
   onMount(updateGraph);
