@@ -4,6 +4,31 @@
 
   let flavor = "";
 
+  function drag(simulation) {
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    return d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
+  }
+
+
   async function updateGraph() {
     if (!flavor) return;
 
@@ -35,16 +60,9 @@
       .attr("width", width)
       .attr("height", height);
 
-    const simulation = d3
-      .forceSimulation(nodes)
-      .force(
-        "link",
-        d3
-          .forceLink(links)
-          .id((d) => d.name)
-          .distance(100)
-      )
-      .force("charge", d3.forceManyBody().strength(-500))
+      const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id((d) => d.name))
+      .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2));
 
     const link = svg
@@ -56,14 +74,13 @@
       .attr("stroke", "#999")
       .attr("stroke-width", (d) => d.strength);
 
-    const node = svg
-      .append("g")
+      const node = svg.append("g")
       .selectAll("circle")
       .data(nodes)
-      .enter()
-      .append("circle")
+      .enter().append("circle")
       .attr("r", 5)
-      .attr("fill", "#69b3a2");
+      .attr("fill", "#69b3a2")
+      .call(drag(simulation));  // Apply the drag behavior
 
       const labels = svg.append("g")
   .selectAll("text")
