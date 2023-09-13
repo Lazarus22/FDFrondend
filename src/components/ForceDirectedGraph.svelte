@@ -3,85 +3,67 @@
   import * as d3 from "d3";
 
   let flavor = "";
-  let expandedNodes = new Set(); // To keep track of expanded nodes
+  let expandedNodes = new Set();
   let nodes = [];
   let links = [];
 
+  async function expandNode(flavor) {
+    const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
+    const data = await res.json();
+
+    if (!nodes.some((node) => node.name === data.flavor)) {
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+    }
+    expandedNodes.add(data.flavor);
+
+    data.recommendations.forEach((rec) => {
+      if (!nodes.some((node) => node.name === rec.name)) {
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+      }
+      if (!links.some((link) => link.source.name === data.flavor && link.target.name === rec.name)) {
+        links.push({
+          source: data.flavor,
+          target: rec.name,
+          strength: rec.strength,
+          relationshipType: rec.relationshipType,
+        });
+      }
+    });
+  }
+
+  function collapseNode(flavor) {
+    const linksToRemove = links.filter(
+      (link) => link.source.name === flavor || link.target.name === flavor
+    );
+
+    const nodesToRemove = linksToRemove.map((link) =>
+      link.source.name === flavor ? link.target.name : link.source.name
+    );
+
+    nodes = nodes.filter((node) => {
+      return (
+        !nodesToRemove.includes(node.name) ||
+        Array.from(expandedNodes).some((expandedNode) =>
+          links.some(
+            (link) =>
+              (link.source.name === expandedNode && link.target.name === node.name) ||
+              (link.target.name === expandedNode && link.source.name === node.name)
+          )
+        )
+      );
+    });
+
+    links = links.filter((link) => !linksToRemove.includes(link));
+
+    expandedNodes.delete(flavor);
+  }
+
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
-      // Identify links that are connected to the flavor to be collapsed
-      const linksToRemove = links.filter(
-        (link) => link.source.name === flavor || link.target.name === flavor
-      );
-
-      // Identify nodes that are connected to the flavor to be collapsed
-      const nodesToRemove = linksToRemove.map((link) =>
-        link.source.name === flavor ? link.target.name : link.source.name
-      );
-
-      // Remove nodes that are not connected to any other expanded node
-      nodes = nodes.filter((node) => {
-        return (
-          !nodesToRemove.includes(node.name) ||
-          Array.from(expandedNodes).some((expandedNode) =>
-            links.some(
-              (link) =>
-                (link.source.name === expandedNode &&
-                  link.target.name === node.name) ||
-                (link.target.name === expandedNode &&
-                  link.source.name === node.name)
-            )
-          )
-        );
-      });
-
-      // Remove links connected to the flavor to be collapsed
-      links = links.filter((link) => {
-        return (
-          (link.source.name !== flavor && link.target.name !== flavor) ||
-          Array.from(expandedNodes).some(
-            (expandedNode) =>
-              link.source.name === expandedNode ||
-              link.target.name === expandedNode
-          )
-        );
-      });
-
-      expandedNodes.delete(flavor);
+      collapseNode(flavor);
     } else {
-      // Expand the node
-      const res = await fetch(
-        `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-      );
-      const data = await res.json();
-
-      // Add the new node if it doesn't already exist
-      if (!nodes.some((node) => node.name === data.flavor)) {
-        nodes.push({ name: data.flavor, nodeType: "Flavor" });
-      }
-      expandedNodes.add(data.flavor);
-
-      // Add the new links and nodes, filtering out duplicates
-      data.recommendations.forEach((rec) => {
-        if (!nodes.some((node) => node.name === rec.name)) {
-          nodes.push({ name: rec.name, nodeType: rec.nodeType });
-        }
-        if (
-          !links.some(
-            (link) =>
-              link.source.name === data.flavor && link.target.name === rec.name
-          )
-        ) {
-          links.push({
-            source: data.flavor,
-            target: rec.name,
-            strength: rec.strength,
-            relationshipType: rec.relationshipType,
-          });
-        }
-      });
+      await expandNode(flavor);
     }
-
     updateGraph();
   }
 
