@@ -118,9 +118,7 @@
       .zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
-        if (!clickedOnce) {
-          svg.selectAll("g").attr("transform", event.transform);
-        }
+        svg.selectAll("g").attr("transform", event.transform);
       });
 
     svg.call(zoom);
