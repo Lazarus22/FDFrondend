@@ -17,6 +17,8 @@
 
     let nodes = [{ name: data.flavor, nodeType: "Flavor" }];
     let links = [];
+    let clickedOnce = false;
+    let timer;
 
     data.recommendations.forEach((rec) => {
       nodes.push({ name: rec.name, nodeType: rec.nodeType });
@@ -65,9 +67,17 @@
       .append("circle")
       .attr("r", 5)
       .attr("fill", "#69b3a2")
-      .on("dblclick", (event, d) => {
-        event.stopPropagation(); // Stop event propagation
-        fetchDataAndUpdate(d.name);
+      .on("click", (event, d) => {
+        if (clickedOnce) {
+          clearTimeout(timer);
+          clickedOnce = false;
+          fetchDataAndUpdate(d.name);
+        } else {
+          clickedOnce = true;
+          timer = setTimeout(() => {
+            clickedOnce = false;
+          }, 300);
+        }
       });
 
     const labels = svg
@@ -85,9 +95,10 @@
     const zoom = d3
       .zoom()
       .scaleExtent([0.1, 10])
-      .filter(() => !d3.event.button && d3.event.type !== "dblclick") // Filter out double-click
       .on("zoom", (event) => {
-        svg.selectAll("g").attr("transform", event.transform);
+        if (!clickedOnce) {
+          svg.selectAll("g").attr("transform", event.transform);
+        }
       });
 
     svg.call(zoom);
