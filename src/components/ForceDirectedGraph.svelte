@@ -7,7 +7,9 @@
   async function updateGraph() {
     if (!flavor) return;
 
-    const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
     const data = await res.json();
 
     d3.select("#forceGraph").selectAll("*").remove();
@@ -28,38 +30,55 @@
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    const svg = d3.select("#forceGraph")
+    const svg = d3
+      .select("#forceGraph")
       .attr("width", width)
       .attr("height", height);
 
-    const simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id((d) => d.name))
-      .force("charge", d3.forceManyBody())
+    const simulation = d3
+      .forceSimulation(nodes)
+      .force(
+        "link",
+        d3
+          .forceLink(links)
+          .id((d) => d.name)
+          .distance(100)
+      )
+      .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    const link = svg.append("g")
+    const link = svg
+      .append("g")
       .selectAll("line")
       .data(links)
-      .enter().append("line")
+      .enter()
+      .append("line")
       .attr("stroke", "#999")
       .attr("stroke-width", (d) => d.strength);
 
-    const node = svg.append("g")
+    const node = svg
+      .append("g")
       .selectAll("circle")
       .data(nodes)
-      .enter().append("circle")
+      .enter()
+      .append("circle")
       .attr("r", 5)
       .attr("fill", "#69b3a2");
 
-    const labels = svg.append("g")
+    const labels = svg
+      .append("g")
       .selectAll("text")
       .data(nodes)
-      .enter().append("text")
-      .attr("dx", 12)
+      .enter()
+      .append("text")
+      .attr("dx", 15)
       .attr("dy", ".35em")
+      .attr("font-size", "12px")
+      .attr("font-family", "Arial, Helvetica, sans-serif")
       .text((d) => d.name);
 
-    const zoom = d3.zoom()
+    const zoom = d3
+      .zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
         svg.selectAll("g").attr("transform", event.transform);
@@ -69,19 +88,24 @@
 
     simulation.on("tick", () => {
       link
-      .attr("x1", (d) => d.source.x)
-      .attr("y1", (d) => d.source.y)
-      .attr("x2", (d) => d.target.x)
-      .attr("y2", (d) => d.target.y);
+        .attr("x1", (d) => d.source.x)
+        .attr("y1", (d) => d.source.y)
+        .attr("x2", (d) => d.target.x)
+        .attr("y2", (d) => d.target.y);
 
-    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-  
-    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
-      });
+      node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+      labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+    });
   }
 
   onMount(updateGraph);
 </script>
 
-<input type="text" bind:value={flavor} placeholder="Enter flavor" on:input={updateGraph} />
-<svg id="forceGraph"></svg>
+<input
+  type="text"
+  bind:value={flavor}
+  placeholder="Enter flavor"
+  on:input={updateGraph}
+/>
+<svg id="forceGraph" />
