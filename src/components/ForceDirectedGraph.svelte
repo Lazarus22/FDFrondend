@@ -63,6 +63,8 @@
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Light gray to black
+
     const svg = d3
       .select("#forceGraph")
       .attr("width", width)
@@ -86,8 +88,8 @@
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", "#999")
-      .attr("stroke-width", (d) => d.strength);
+      .attr("stroke", (d) => colorScale(d.strength)) // Use the color scale
+      .attr("stroke-width", 2); // Set a uniform stroke width
 
     const node = svg
       .append("g")
