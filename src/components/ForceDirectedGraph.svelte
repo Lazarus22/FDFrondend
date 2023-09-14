@@ -7,10 +7,6 @@
   #forceGraph {
     background-color: #f6f7fb;
   }
-  :global(body), :global(svg) {
-    margin: 0;
-    padding: 0;
-  }
 </style>
 
 

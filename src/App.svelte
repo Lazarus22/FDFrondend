@@ -7,11 +7,11 @@
 </main>
 
 <style>
-  main {
-    text-align: center;
-    padding: 1em;
-    width: 100%;
-    margin: 0;
-  }
+main {
+  text-align: center;
+  padding: 0;
+  width: 100%;
+  margin: 0;
+}
 
 </style>
