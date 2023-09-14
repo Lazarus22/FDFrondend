@@ -38,52 +38,55 @@
     });
   }
   function collapseNode(flavor) {
-  // Remove the node from the expandedNodes set
-  expandedNodes.delete(flavor);
+    // Remove the node from the expandedNodes set
+    expandedNodes.delete(flavor);
 
-  // Identify links that are connected to the flavor to be collapsed
-  const linksToRemove = links.filter(
-    (link) => link.source.name === flavor || link.target.name === flavor
-  );
-
-  // Identify nodes that are connected to the flavor to be collapsed
-  const nodesToRemove = linksToRemove.map((link) =>
-    link.source.name === flavor ? link.target.name : link.source.name
-  );
-
-  // Remove links connected to the flavor to be collapsed
-  links = links.filter((link) => {
-    return !(
-      (link.source.name === flavor || link.target.name === flavor) &&
-      !Array.from(expandedNodes).some(
-        (expandedNode) =>
-          link.source.name === expandedNode || link.target.name === expandedNode
-      )
+    // Identify links that are connected to the flavor to be collapsed
+    const linksToRemove = links.filter(
+      (link) => link.source.name === flavor || link.target.name === flavor
     );
-  });
 
-  // Remove nodes that are not connected to any other expanded node
-  nodes = nodes.filter((node) => {
-    return (
-      node.name === flavor ||
-      !nodesToRemove.includes(node.name) ||
-      Array.from(expandedNodes).some((expandedNode) =>
-        links.some(
-          (link) =>
-            (link.source.name === expandedNode && link.target.name === node.name) ||
-            (link.target.name === expandedNode && link.source.name === node.name)
+    // Identify nodes that are connected to the flavor to be collapsed
+    const nodesToRemove = linksToRemove.map((link) =>
+      link.source.name === flavor ? link.target.name : link.source.name
+    );
+
+    // Remove links connected to the flavor to be collapsed
+    links = links.filter((link) => {
+      return !(
+        (link.source.name === flavor || link.target.name === flavor) &&
+        !Array.from(expandedNodes).some(
+          (expandedNode) =>
+            link.source.name === expandedNode ||
+            link.target.name === expandedNode
         )
-      )
-    );
-  });
-}
+      );
+    });
 
+    // Remove nodes that are not connected to any other expanded node and are not in the expandedNodes set
+    nodes = nodes.filter((node) => {
+      return (
+        expandedNodes.has(node.name) ||
+        node.name === flavor ||
+        !nodesToRemove.includes(node.name) ||
+        Array.from(expandedNodes).some((expandedNode) =>
+          links.some(
+            (link) =>
+              (link.source.name === expandedNode &&
+                link.target.name === node.name) ||
+              (link.target.name === expandedNode &&
+                link.source.name === node.name)
+          )
+        )
+      );
+    });
+  }
 
   async function fetchDataAndUpdate(flavor) {
-    if (expandedNodes.has(flavor)) {
-      collapseNode(flavor);
-    } else {
+    if (!expandedNodes.has(flavor)) {
       await expandNode(flavor);
+    } else {
+      collapseNode(flavor);
     }
     updateGraph();
   }
@@ -147,12 +150,12 @@
       .attr("pointer-events", "none") // Make text non-interactive
       .text((d) => d.name);
 
-const zoom = d3
-  .zoom()
-  .scaleExtent([0.1, 10])
-  .on("zoom", (event) => {
-    svg.selectAll("g").attr("transform", event.transform);
-  });
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        svg.selectAll("g").attr("transform", event.transform);
+      });
 
     svg.call(zoom);
 
