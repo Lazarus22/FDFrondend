@@ -7,7 +7,7 @@
   let nodes = [];
   let links = [];
 
-  async function expandNode(flavor) {
+  async function expandNode(flavor, clickedNode = null) {
     const res = await fetch(
       `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
     );
@@ -19,13 +19,23 @@
     }
 
     if (!nodes.some((node) => node.name === data.flavor)) {
-      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+      nodes.push({
+        name: data.flavor,
+        nodeType: "Flavor",
+        x: clickedNode ? clickedNode.x : undefined,
+        y: clickedNode ? clickedNode.y : undefined,
+      });
     }
     expandedNodes.add(data.flavor);
 
     data.recommendations.forEach((rec) => {
       if (!nodes.some((node) => node.name === rec.name)) {
-        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+        nodes.push({
+          name: rec.name,
+          nodeType: rec.nodeType,
+          x: clickedNode ? clickedNode.x : undefined,
+          y: clickedNode ? clickedNode.y : undefined,
+        });
       }
       if (
         !links.some(
@@ -99,9 +109,9 @@
     Related: "#d9c8ae",
   };
 
-  async function fetchDataAndUpdate(flavor) {
+  async function fetchDataAndUpdate(flavor, clickedNode = null) {
     if (!expandedNodes.has(flavor)) {
-      await expandNode(flavor);
+      await expandNode(flavor, clickedNode);
     } else {
       collapseNode(flavor);
     }
@@ -135,9 +145,6 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    // Warm up the simulation
-    for (let i = 0; i < 300; ++i) simulation.tick();
-
     const link = zoomGroup
       .append("g")
       .selectAll("line")
@@ -155,7 +162,7 @@
       .append("g")
       .attr("class", "node")
       .on("dblclick", (event, d) => {
-        fetchDataAndUpdate(d.name);
+        fetchDataAndUpdate(d.name, d);
       });
 
     nodeGroup
