@@ -123,7 +123,7 @@
       .enter()
       .append("line")
       .attr("stroke", (d) => colorScale(d.strength)) // Use the color scale
-      .attr("stroke-width", 2); // Set a uniform stroke width
+      .attr("stroke-width", 1); // Set a uniform stroke width
 
     const node = svg
       .append("g")
