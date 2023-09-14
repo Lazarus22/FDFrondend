@@ -3,6 +3,7 @@
   #forceGraph {
     background-color: #f6f7fb;
   }
+
 </style>
 
 
@@ -123,9 +124,9 @@
     };
 
     const svg = d3
-      .select("#forceGraph")
-      .attr("width", width)
-      .attr("height", height);
+  .select("#forceGraph")
+  .attr("preserveAspectRatio", "xMinYMin meet")
+  .attr("viewBox", "0 0 960 500");
 
     const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
