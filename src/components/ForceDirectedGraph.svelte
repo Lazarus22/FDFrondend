@@ -116,41 +116,40 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    const link = svg
+      const link = svg
       .append("g")
       .selectAll("line")
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", (d) => colorScale(d.strength)) // Use the color scale
-      .attr("stroke-width", 1); // Set a uniform stroke width
+      .attr("stroke", (d) => colorScale(d.strength))
+      .attr("stroke-width", 1);
 
-    const node = svg
+    const nodeGroup = svg
       .append("g")
-      .selectAll("circle")
+      .selectAll("g.node")
       .data(nodes)
       .enter()
-      .append("circle")
-      .attr("r", 5)
-      .attr("fill", "#69b3a2")
+      .append("g")
+      .attr("class", "node")
       .on("dblclick", (event, d) => {
         fetchDataAndUpdate(d.name);
       });
 
-    const labels = svg
-      .append("g")
-      .selectAll("text")
-      .data(nodes)
-      .enter()
+    nodeGroup
+      .append("circle")
+      .attr("r", 5)
+      .attr("fill", "#69b3a2");
+
+    nodeGroup
       .append("text")
-      .attr("dy", ".35em")
+      .text((d) => d.name)
+      .attr("x", 6)
+      .attr("y", 3)
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("pointer-events", "none")
-      .attr("x", 6) // Add this line
-      .attr("y", 3) // Add this line
-      .text((d) => d.name); // Add the text directly
-
+      .attr("pointer-events", "none");
+      
     const zoom = d3
       .zoom()
       .scaleExtent([0.1, 10])
