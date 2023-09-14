@@ -116,7 +116,7 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-      const link = svg
+    const link = svg
       .append("g")
       .selectAll("line")
       .data(links)
@@ -136,10 +136,7 @@
         fetchDataAndUpdate(d.name);
       });
 
-    nodeGroup
-      .append("circle")
-      .attr("r", 5)
-      .attr("fill", "#69b3a2");
+    nodeGroup.append("circle").attr("r", 5).attr("fill", "#69b3a2");
 
     nodeGroup
       .append("text")
@@ -166,9 +163,7 @@
         .attr("x2", (d) => d.target.x)
         .attr("y2", (d) => d.target.y);
 
-      nodeGroup.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-
-      labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+      nodeGroup.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
     });
   }
   onMount(() => fetchDataAndUpdate(flavor));
