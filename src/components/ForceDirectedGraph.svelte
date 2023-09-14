@@ -136,7 +136,7 @@
       .enter()
       .append("line")
       .attr("stroke", (d) => colorScale(d.strength))
-      .attr("stroke-width", 1);
+      .attr("stroke-width", 0.5);
 
     const nodeGroup = zoomGroup
       .append("g")
