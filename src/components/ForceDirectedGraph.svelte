@@ -143,12 +143,14 @@
       .data(nodes)
       .enter()
       .append("text")
-      .attr("text-anchor", "middle") // Center the text
+      .attr("text-anchor", "start") // Change from "middle" to "start"
       .attr("dy", ".35em")
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("pointer-events", "none") // Make text non-interactive
-      .text((d) => d.name);
+      .attr("pointer-events", "none")
+      .attr("x", 6) // Add this line
+      .attr("y", 3) // Add this line
+      .text((d) => d.name); // Add the text directly
 
     const zoom = d3
       .zoom()
