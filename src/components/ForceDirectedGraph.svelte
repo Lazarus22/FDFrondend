@@ -104,12 +104,14 @@
 
     const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
+    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Define colorScale
+
     const simulation = d3
-      .forceSimulation(nodes) // Use global nodes
+      .forceSimulation(nodes)
       .force(
         "link",
         d3
-          .forceLink(links) // Use global links
+          .forceLink(links)
           .id((d) => d.name)
           .distance(100)
       )
@@ -151,7 +153,7 @@
       .zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
-        zoomGroup.attr("transform", event.transform); // Apply zoom to zoomGroup only
+        zoomGroup.attr("transform", event.transform);
       });
 
     svg.call(zoom);
@@ -166,6 +168,7 @@
       nodeGroup.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
     });
   }
+
   onMount(() => fetchDataAndUpdate(flavor));
 </script>
 
