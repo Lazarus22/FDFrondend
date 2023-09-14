@@ -38,47 +38,22 @@
     });
   }
   function collapseNode(flavor) {
-    // Identify links that are connected to the flavor to be collapsed
-    const linksToRemove = links.filter(
-      (link) => link.source.name === flavor || link.target.name === flavor
-    );
+  // Remove the flavor from the expandedNodes set
+  expandedNodes.delete(flavor);
 
-    // Identify nodes that are connected to the flavor to be collapsed
-    const nodesToRemove = linksToRemove.map((link) =>
-      link.source.name === flavor ? link.target.name : link.source.name
-    );
+  // Filter out links that are connected to the flavor
+  links = links.filter((link) => link.source.name !== flavor && link.target.name !== flavor);
 
-    // Remove links connected to the flavor to be collapsed
-    links = links.filter((link) => {
-      return !(
-        (link.source.name === flavor || link.target.name === flavor) &&
-        !Array.from(expandedNodes).some(
-          (expandedNode) =>
-            link.source.name === expandedNode ||
-            link.target.name === expandedNode
-        )
-      );
-    });
+  // Create a set of node names that are still connected
+  const connectedNodes = new Set();
+  links.forEach((link) => {
+    connectedNodes.add(link.source.name);
+    connectedNodes.add(link.target.name);
+  });
 
-    // Remove nodes that are not connected to any other expanded node
-    nodes = nodes.filter((node) => {
-      return (
-        node.name === flavor ||
-        !nodesToRemove.includes(node.name) ||
-        Array.from(expandedNodes).some((expandedNode) =>
-          links.some(
-            (link) =>
-              (link.source.name === expandedNode &&
-                link.target.name === node.name) ||
-              (link.target.name === expandedNode &&
-                link.source.name === node.name)
-          )
-        )
-      );
-    });
-
-    expandedNodes.delete(flavor);
-  }
+  // Filter out nodes that are not connected to any other node
+  nodes = nodes.filter((node) => connectedNodes.has(node.name));
+}
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
