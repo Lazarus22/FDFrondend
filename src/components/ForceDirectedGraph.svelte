@@ -82,6 +82,17 @@
     });
   }
 
+  const colorMap = {
+    Ingredient: "#FF5733",
+    Taste: "#33FF57",
+    Volume: "#3357FF",
+    Weight: "#FF33F6",
+    Season: "#F1C40F",
+    Function: "#E74C3C",
+    Technique: "#8E44AD",
+    Related: "#2ECC71",
+  };
+
   async function fetchDataAndUpdate(flavor) {
     if (!expandedNodes.has(flavor)) {
       await expandNode(flavor);
@@ -138,7 +149,10 @@
         fetchDataAndUpdate(d.name);
       });
 
-    nodeGroup.append("circle").attr("r", 5).attr("fill", "#69b3a2");
+    nodeGroup
+      .append("circle")
+      .attr("r", 5)
+      .attr("fill", (d) => colorMap[d.nodeType] || "#000000");
 
     nodeGroup
       .append("text")
