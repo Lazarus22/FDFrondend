@@ -97,14 +97,12 @@
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Light gray to black
-
-    const zoomGroup = svg.append("g");
-
     const svg = d3
       .select("#forceGraph")
       .attr("width", width)
       .attr("height", height);
+
+    const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
     const simulation = d3
       .forceSimulation(nodes) // Use global nodes
