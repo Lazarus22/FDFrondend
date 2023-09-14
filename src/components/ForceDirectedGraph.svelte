@@ -6,18 +6,7 @@
   let expandedNodes = new Set();
   let nodes = [];
   let links = [];
-
-  simulation = d3
-    .forceSimulation(nodes)
-    .force(
-      "link",
-      d3
-        .forceLink(links)
-        .id((d) => d.name)
-        .distance(100)
-    )
-    .force("charge", d3.forceManyBody().strength(-500))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+  let simulation;
 
   async function expandNode(flavor) {
     const res = await fetch(
@@ -112,20 +101,18 @@
   };
 
   async function fetchDataAndUpdate(flavor) {
-  if (!expandedNodes.has(flavor)) {
-    await expandNode(flavor);
-  } else {
-    collapseNode(flavor);
+    if (!expandedNodes.has(flavor)) {
+      await expandNode(flavor);
+    } else {
+      collapseNode(flavor);
+    }
+    // Update the simulation with the new nodes and links
+    simulation.nodes(nodes);
+    simulation.force("link").links(links);
+    simulation.alpha(1).restart();
+
+    updateGraph();
   }
-  
-  // Update the simulation with the new nodes and links
-  simulation.nodes(nodes);
-  simulation.force("link").links(links);
-  simulation.alpha(1).restart();
-
-  updateGraph();
-}
-
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
@@ -138,23 +125,7 @@
       .attr("width", width)
       .attr("height", height);
 
-    const zoomGroup = svg.append("g"); // Define zoomGroup after svg
-
-    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Define colorScale
-
-    const simulation = d3
-      .forceSimulation(nodes)
-      .force(
-        "link",
-        d3
-          .forceLink(links)
-          .id((d) => d.name)
-          .distance(100)
-      )
-      .force("charge", d3.forceManyBody().strength(-500))
-      .force("center", d3.forceCenter(width / 2, height / 2));
-
-      nodes.push({ name: rec.name, nodeType: rec.nodeType, x: clickedNode.x, y: clickedNode.y });
+    const zoomGroup = svg.append("g");
 
     const link = zoomGroup
       .append("g")
@@ -162,7 +133,6 @@
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", (d) => colorScale(d.strength))
       .attr("stroke-width", 0.5);
 
     const nodeGroup = zoomGroup
@@ -197,25 +167,6 @@
         zoomGroup.attr("transform", event.transform);
       });
 
-    // Drag functions
-    function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-      d.fx = event.x;
-      d.fy = event.y;
-    }
-
-    function dragended(event, d) {
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
-    }
-
-    // Add drag behavior to nodes
     const drag = d3
       .drag()
       .on("start", dragstarted)
@@ -224,18 +175,27 @@
 
     nodeGroup.call(drag);
 
-    svg.call(zoom);
-
     simulation.on("tick", () => {
       link
         .attr("x1", (d) => d.source.x)
         .attr("y1", (d) => d.source.y)
         .attr("x2", (d) => d.target.x)
         .attr("y2", (d) => d.target.y);
+
+      nodeGroup.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
     });
   }
 
-  onMount(() => fetchDataAndUpdate(flavor));
+  onMount(() => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    simulation = d3
+      .forceSimulation()
+      .force("link", d3.forceLink().id((d) => d.name))
+      .force("charge", d3.forceManyBody())
+      .force("center", d3.forceCenter(width / 2, height / 2));
+    fetchDataAndUpdate(flavor);
+  });
 </script>
 
 <input
