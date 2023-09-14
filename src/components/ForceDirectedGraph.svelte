@@ -37,18 +37,48 @@
       }
     });
   }
-function collapseNode(flavor) {
-  // Remove the node from the expandedNodes set
-  expandedNodes.delete(flavor);
+  function collapseNode(flavor) {
+    // Identify links that are connected to the flavor to be collapsed
+    const linksToRemove = links.filter(
+      (link) => link.source.name === flavor || link.target.name === flavor
+    );
 
-  // Filter out links that are connected to the collapsed node
-  links = links.filter(link => link.source.name !== flavor && link.target.name !== flavor);
+    // Identify nodes that are connected to the flavor to be collapsed
+    const nodesToRemove = linksToRemove.map((link) =>
+      link.source.name === flavor ? link.target.name : link.source.name
+    );
 
-  // Filter out nodes that are not connected to any expanded node, but keep the collapsed node
-  nodes = nodes.filter(node => {
-    return node.name === flavor || links.some(link => link.source.name === node.name || link.target.name === node.name);
-  });
-}
+    // Remove links connected to the flavor to be collapsed
+    links = links.filter((link) => {
+      return !(
+        (link.source.name === flavor || link.target.name === flavor) &&
+        !Array.from(expandedNodes).some(
+          (expandedNode) =>
+            link.source.name === expandedNode ||
+            link.target.name === expandedNode
+        )
+      );
+    });
+
+    // Remove nodes that are not connected to any other expanded node
+    nodes = nodes.filter((node) => {
+      return (
+        node.name === flavor ||
+        !nodesToRemove.includes(node.name) ||
+        Array.from(expandedNodes).some((expandedNode) =>
+          links.some(
+            (link) =>
+              (link.source.name === expandedNode &&
+                link.target.name === node.name) ||
+              (link.target.name === expandedNode &&
+                link.source.name === node.name)
+          )
+        )
+      );
+    });
+
+    expandedNodes.delete(flavor);
+  }
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
@@ -118,12 +148,12 @@ function collapseNode(flavor) {
       .attr("pointer-events", "none") // Make text non-interactive
       .text((d) => d.name);
 
-const zoom = d3
-  .zoom()
-  .scaleExtent([0.1, 10])
-  .on("zoom", (event) => {
-    svg.selectAll("g").attr("transform", event.transform);
-  });
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        svg.selectAll("g").attr("transform", event.transform);
+      });
 
     svg.call(zoom);
 
