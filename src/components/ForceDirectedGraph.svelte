@@ -1,9 +1,5 @@
 <style>
-  #search-container {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-  }
+
   #forceGraph {
     background-color: #f6f7fb;
   }
