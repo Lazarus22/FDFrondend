@@ -91,34 +91,6 @@
     updateGraph();
   }
 
-
-  function breakText(d) {
-  const words = d.name.split(" ");
-  let lineNumber = 0;
-  let line = "";
-  let tspan = this.append("tspan").attr("x", 0).attr("dy", "0em");
-
-  words.forEach((word) => {
-    let charIndex = 0;
-    while (charIndex < word.length) {
-      const subWord = word.slice(charIndex, charIndex + 8);
-      line = line ? `${line} ${subWord}` : subWord;
-      charIndex += 8;
-
-      if (charIndex < word.length) {
-        line += "-";
-      }
-
-      tspan.text(line);
-      tspan = this.append("tspan").attr("x", 0).attr("dy", "1em");
-      line = "";
-    }
-  });
-}
-
-const minZoomForText = 0.5; // Adjust this value as needed
-
-
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
 
@@ -165,38 +137,27 @@ const minZoomForText = 0.5; // Adjust this value as needed
         fetchDataAndUpdate(d.name);
       });
 
-      const labels = svg
-    .append("g")
-    .selectAll("text")
-    .data(nodes)
-    .enter()
-    .append("text")
-    .attr("text-anchor", "middle")
-    .attr("dy", ".35em")
-    .attr("font-size", "12px")
-    .attr("font-family", "Arial, Helvetica, sans-serif")
-    .attr("pointer-events", "none")
-    .each(breakText); // Break the text into lines
-
+    const labels = svg
+      .append("g")
+      .selectAll("text")
+      .data(nodes)
+      .enter()
+      .append("text")
+      .attr("text-anchor", "middle") // Center the text
+      .attr("dy", ".35em")
+      .attr("font-size", "12px")
+      .attr("font-family", "Arial, Helvetica, sans-serif")
+      .attr("pointer-events", "none") // Make text non-interactive
+      .text((d) => d.name);
 
     const zoom = d3
-    .zoom()
-    .scaleExtent([0.1, 10])
-    .on("zoom", (event) => {
-      const currentZoom = event.transform.k;
-      svg.selectAll("g").attr("transform", event.transform);
+      .zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        svg.selectAll("g").attr("transform", event.transform);
+      });
 
-      // Hide or show text based on zoom level
-      svg.selectAll("text")
-        .style("display", currentZoom < minZoomForText ? "none" : "block");
-
-      // Resize text based on zoom level
-      svg.selectAll("text")
-        .attr("font-size", `${12 * currentZoom}px`);
-    });
-
-  svg.call(zoom);
-
+    svg.call(zoom);
 
     simulation.on("tick", () => {
       link
