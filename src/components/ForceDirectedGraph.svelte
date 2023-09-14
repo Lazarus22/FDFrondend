@@ -99,6 +99,8 @@
 
     const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Light gray to black
 
+    const zoomGroup = svg.append("g");
+
     const svg = d3
       .select("#forceGraph")
       .attr("width", width)
@@ -116,7 +118,7 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
-    const link = svg
+    const link = zoomGroup
       .append("g")
       .selectAll("line")
       .data(links)
@@ -125,7 +127,7 @@
       .attr("stroke", (d) => colorScale(d.strength))
       .attr("stroke-width", 1);
 
-    const nodeGroup = svg
+    const nodeGroup = zoomGroup
       .append("g")
       .selectAll("g.node")
       .data(nodes)
@@ -151,7 +153,7 @@
       .zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
-        svg.selectAll("g").attr("transform", event.transform);
+        zoomGroup.attr("transform", event.transform); // Apply zoom to zoomGroup only
       });
 
     svg.call(zoom);
