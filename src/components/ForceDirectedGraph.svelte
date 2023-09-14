@@ -132,9 +132,9 @@
     };
 
     const svg = d3
-  .select("#forceGraph")
-  .attr("preserveAspectRatio", "xMinYMin meet")
-  .attr("viewBox", "0 0 960 500");
+    .select("#forceGraph")
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
 
     const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
@@ -239,6 +239,10 @@
       fetchDataAndUpdate(flavor);
     }
   }
+
+  window.addEventListener("resize", () => {
+  updateGraph();
+});
 </script>
 
 <div id="search-container">
