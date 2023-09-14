@@ -37,18 +37,47 @@
       }
     });
   }
-function collapseNode(flavor) {
+  function collapseNode(flavor) {
   // Remove the node from the expandedNodes set
   expandedNodes.delete(flavor);
 
-  // Filter out links that are connected to the collapsed node
-  links = links.filter(link => link.source.name !== flavor && link.target.name !== flavor);
+  // Identify links that are connected to the flavor to be collapsed
+  const linksToRemove = links.filter(
+    (link) => link.source.name === flavor || link.target.name === flavor
+  );
 
-  // Filter out nodes that are not connected to any expanded node, but keep the collapsed node
-  nodes = nodes.filter(node => {
-    return node.name === flavor || links.some(link => link.source.name === node.name || link.target.name === node.name);
+  // Identify nodes that are connected to the flavor to be collapsed
+  const nodesToRemove = linksToRemove.map((link) =>
+    link.source.name === flavor ? link.target.name : link.source.name
+  );
+
+  // Remove links connected to the flavor to be collapsed
+  links = links.filter((link) => {
+    return !(
+      (link.source.name === flavor || link.target.name === flavor) &&
+      !Array.from(expandedNodes).some(
+        (expandedNode) =>
+          link.source.name === expandedNode || link.target.name === expandedNode
+      )
+    );
+  });
+
+  // Remove nodes that are not connected to any other expanded node
+  nodes = nodes.filter((node) => {
+    return (
+      node.name === flavor ||
+      !nodesToRemove.includes(node.name) ||
+      Array.from(expandedNodes).some((expandedNode) =>
+        links.some(
+          (link) =>
+            (link.source.name === expandedNode && link.target.name === node.name) ||
+            (link.target.name === expandedNode && link.source.name === node.name)
+        )
+      )
+    );
   });
 }
+
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
