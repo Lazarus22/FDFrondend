@@ -38,17 +38,17 @@
     });
   }
 function collapseNode(flavor) {
-    // Remove the node from the expandedNodes set
-    expandedNodes.delete(flavor);
+  // Remove the node from the expandedNodes set
+  expandedNodes.delete(flavor);
 
-    // Filter out links that are connected to the collapsed node
-    links = links.filter(link => link.source.name !== flavor && link.target.name !== flavor);
+  // Filter out links that are connected to the collapsed node
+  links = links.filter(link => link.source.name !== flavor && link.target.name !== flavor);
 
-    // Filter out nodes that are not connected to any expanded node
-    nodes = nodes.filter(node => {
-      return links.some(link => link.source.name === node.name || link.target.name === node.name);
-    });
-  }
+  // Filter out nodes that are not connected to any expanded node, but keep the collapsed node
+  nodes = nodes.filter(node => {
+    return node.name === flavor || links.some(link => link.source.name === node.name || link.target.name === node.name);
+  });
+}
 
   async function fetchDataAndUpdate(flavor) {
     if (expandedNodes.has(flavor)) {
