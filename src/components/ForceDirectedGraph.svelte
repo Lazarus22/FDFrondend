@@ -135,6 +135,9 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
+    // Warm up the simulation
+    for (let i = 0; i < 300; ++i) simulation.tick();
+
     const link = zoomGroup
       .append("g")
       .selectAll("line")
