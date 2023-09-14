@@ -135,6 +135,7 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
+      nodes.push({ name: rec.name, nodeType: rec.nodeType, x: clickedNode.x, y: clickedNode.y });
 
     const link = zoomGroup
       .append("g")
