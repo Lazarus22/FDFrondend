@@ -1,3 +1,4 @@
+
 <style>
   #search-container {
     position: absolute;
@@ -8,13 +9,22 @@
   #forceGraph {
     background-color: #f6f7fb;
   }
-  :global(body), :global(svg) {
-    margin: 0;
-    padding: 0;
-  }
+  .svg-container {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%; /* aspect ratio */
+  vertical-align: top;
+  overflow: hidden;
+}
+.svg-content-responsive {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 </style>
-
-
 
 <script>
   import * as d3 from "d3";
@@ -25,41 +35,41 @@
   let links = [];
 
   async function expandNode(flavor) {
-  const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
-  const data = await res.json();
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
+    const data = await res.json();
 
-  // Check if recommendations are null
-  if (data.recommendations === null) {
-    return;  // Exit the function early
+    // Check if recommendations are null
+    if (data.recommendations === null) {
+      return; // Exit the function early
+    }
+
+    if (!nodes.some((node) => node.name === data.flavor)) {
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+    }
+    expandedNodes.add(data.flavor);
+
+    data.recommendations.forEach((rec) => {
+      if (!nodes.some((node) => node.name === rec.name)) {
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+      }
+      if (
+        !links.some(
+          (link) =>
+            link.source.name === data.flavor && link.target.name === rec.name
+        )
+      ) {
+        links.push({
+          source: data.flavor,
+          target: rec.name,
+          strength: rec.strength,
+          relationshipType: rec.relationshipType,
+        });
+      }
+    });
   }
 
-  if (!nodes.some((node) => node.name === data.flavor)) {
-    nodes.push({ name: data.flavor, nodeType: "Flavor" });
-  }
-  expandedNodes.add(data.flavor);
-
-  data.recommendations.forEach((rec) => {
-    if (!nodes.some((node) => node.name === rec.name)) {
-      nodes.push({ name: rec.name, nodeType: rec.nodeType });
-    }
-    if (
-      !links.some(
-        (link) =>
-          link.source.name === data.flavor && link.target.name === rec.name
-      )
-    ) {
-      links.push({
-        source: data.flavor,
-        target: rec.name,
-        strength: rec.strength,
-        relationshipType: rec.relationshipType,
-      });
-    }
-  });
-}
-
-
-  
   function collapseNode(flavor) {
     // Remove the node from the expandedNodes set
     expandedNodes.delete(flavor);
@@ -132,9 +142,13 @@
     };
 
     const svg = d3
-    .select("#forceGraph")
-    .attr("preserveAspectRatio", "xMinYMin meet")
-    .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      .select("div#forceGraph")
+      .append("div")
+      .classed("svg-container", true)
+      .append("svg")
+      .attr("preserveAspectRatio", "xMinYMin meet")
+      .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`)
+      .classed("svg-content-responsive", true);
 
     const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
@@ -239,10 +253,6 @@
       fetchDataAndUpdate(flavor);
     }
   }
-
-  window.addEventListener("resize", () => {
-  updateGraph();
-});
 </script>
 
 <div id="search-container">
@@ -253,4 +263,8 @@
     on:keydown={handleKeyDown}
   />
 </div>
-<svg id="forceGraph" />
+<div class="svg-container">
+  <div id="forceGraph" class="svg-content-responsive"></div>
+</div>
+
+
