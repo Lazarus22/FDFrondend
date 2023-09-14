@@ -1,11 +1,19 @@
 <style>
   #search-container {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 20px;
+    z-index: 1; /* Make sure it appears above the SVG */
   }
-
+  #forceGraph {
+    background-color: #f6f7fb;
+  }
+  :global(body), :global(svg) {
+    margin: 0;
+    padding: 0;
+  }
 </style>
+
 
 
 <script>
@@ -124,9 +132,9 @@
     };
 
     const svg = d3
-      .select("#forceGraph")
-      .attr("width", width)
-      .attr("height", height);
+    .select("#forceGraph")
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
 
     const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
@@ -231,6 +239,10 @@
       fetchDataAndUpdate(flavor);
     }
   }
+
+  window.addEventListener("resize", () => {
+  updateGraph();
+});
 </script>
 
 <div id="search-container">
