@@ -143,7 +143,6 @@
       .data(nodes)
       .enter()
       .append("text")
-      .attr("text-anchor", "start") // Change from "middle" to "start"
       .attr("dy", ".35em")
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
