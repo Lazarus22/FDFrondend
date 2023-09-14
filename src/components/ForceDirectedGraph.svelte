@@ -83,14 +83,14 @@
   }
 
   const colorMap = {
-    Ingredient: "#FF5733",
-    Taste: "#33FF57",
-    Volume: "#3357FF",
-    Weight: "#FF33F6",
-    Season: "#F1C40F",
-    Function: "#E74C3C",
-    Technique: "#8E44AD",
-    Related: "#2ECC71",
+    Ingredient: "#fee07e",
+    Taste: "#ecb5ca",
+    Volume: "#f16767",
+    Weight: "#ca90c0",
+    Season: "#8cce91",
+    Function: "#f79767",
+    Technique: "#58c7e3",
+    Related: "#d9c8ae",
   };
 
   async function fetchDataAndUpdate(flavor) {
