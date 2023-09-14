@@ -226,7 +226,3 @@
 />
 <svg id="forceGraph" />
 
-lets implement
-simulation.nodes(nodes);
-simulation.force("link").links(links);
-simulation.alpha(1).restart();
