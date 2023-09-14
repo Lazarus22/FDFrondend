@@ -1,21 +1,3 @@
-<style>
-  #search-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 1; /* Make sure it appears above the SVG */
-  }
-  #forceGraph {
-    background-color: #f6f7fb;
-  }
-  :global(body), :global(svg) {
-    margin: 0;
-    padding: 0;
-  }
-</style>
-
-
-
 <script>
   import * as d3 from "d3";
 
@@ -24,42 +6,46 @@
   let nodes = [];
   let links = [];
 
-  async function expandNode(flavor) {
-  const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
-  const data = await res.json();
-
-  // Check if recommendations are null
-  if (data.recommendations === null) {
-    return;  // Exit the function early
-  }
-
-  if (!nodes.some((node) => node.name === data.flavor)) {
-    nodes.push({ name: data.flavor, nodeType: "Flavor" });
-  }
-  expandedNodes.add(data.flavor);
-
-  data.recommendations.forEach((rec) => {
-    if (!nodes.some((node) => node.name === rec.name)) {
-      nodes.push({ name: rec.name, nodeType: rec.nodeType });
-    }
-    if (
-      !links.some(
-        (link) =>
-          link.source.name === data.flavor && link.target.name === rec.name
-      )
-    ) {
-      links.push({
-        source: data.flavor,
-        target: rec.name,
-        strength: rec.strength,
-        relationshipType: rec.relationshipType,
-      });
-    }
+  onMount(() => {
+    updateGraph();
   });
-}
 
+  async function expandNode(flavor) {
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
+    const data = await res.json();
 
-  
+    // Check if recommendations are null
+    if (data.recommendations === null) {
+      return; // Exit the function early
+    }
+
+    if (!nodes.some((node) => node.name === data.flavor)) {
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+    }
+    expandedNodes.add(data.flavor);
+
+    data.recommendations.forEach((rec) => {
+      if (!nodes.some((node) => node.name === rec.name)) {
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+      }
+      if (
+        !links.some(
+          (link) =>
+            link.source.name === data.flavor && link.target.name === rec.name
+        )
+      ) {
+        links.push({
+          source: data.flavor,
+          target: rec.name,
+          strength: rec.strength,
+          relationshipType: rec.relationshipType,
+        });
+      }
+    });
+  }
+
   function collapseNode(flavor) {
     // Remove the node from the expandedNodes set
     expandedNodes.delete(flavor);
@@ -132,9 +118,9 @@
     };
 
     const svg = d3
-    .select("#forceGraph")
-    .attr("preserveAspectRatio", "xMinYMin meet")
-    .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      .select("#forceGraph")
+      .attr("preserveAspectRatio", "xMinYMin meet")
+      .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
 
     const zoomGroup = svg.append("g"); // Define zoomGroup after svg
 
@@ -241,9 +227,11 @@
   }
 
   window.addEventListener("resize", () => {
-  updateGraph();
-});
+    updateGraph();
+  });
 </script>
+
+import {onMount} from 'svelte';
 
 <div id="search-container">
   <input
@@ -254,3 +242,20 @@
   />
 </div>
 <svg id="forceGraph" />
+
+<style>
+  #search-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1; /* Make sure it appears above the SVG */
+  }
+  #forceGraph {
+    background-color: #f6f7fb;
+  }
+  :global(body),
+  :global(svg) {
+    margin: 0;
+    padding: 0;
+  }
+</style>
