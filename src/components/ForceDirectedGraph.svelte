@@ -7,7 +7,19 @@
   let nodes = [];
   let links = [];
 
-  async function expandNode(flavor, clickedNode = null) {
+  simulation = d3
+    .forceSimulation(nodes)
+    .force(
+      "link",
+      d3
+        .forceLink(links)
+        .id((d) => d.name)
+        .distance(100)
+    )
+    .force("charge", d3.forceManyBody().strength(-500))
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+  async function expandNode(flavor) {
     const res = await fetch(
       `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
     );
@@ -19,23 +31,13 @@
     }
 
     if (!nodes.some((node) => node.name === data.flavor)) {
-      nodes.push({
-        name: data.flavor,
-        nodeType: "Flavor",
-        x: clickedNode ? clickedNode.x : undefined,
-        y: clickedNode ? clickedNode.y : undefined,
-      });
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
     }
     expandedNodes.add(data.flavor);
 
     data.recommendations.forEach((rec) => {
       if (!nodes.some((node) => node.name === rec.name)) {
-        nodes.push({
-          name: rec.name,
-          nodeType: rec.nodeType,
-          x: clickedNode ? clickedNode.x : undefined,
-          y: clickedNode ? clickedNode.y : undefined,
-        });
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
       }
       if (
         !links.some(
@@ -109,14 +111,21 @@
     Related: "#d9c8ae",
   };
 
-  async function fetchDataAndUpdate(flavor, clickedNode = null) {
-    if (!expandedNodes.has(flavor)) {
-      await expandNode(flavor, clickedNode);
-    } else {
-      collapseNode(flavor);
-    }
-    updateGraph();
+  async function fetchDataAndUpdate(flavor) {
+  if (!expandedNodes.has(flavor)) {
+    await expandNode(flavor);
+  } else {
+    collapseNode(flavor);
   }
+  
+  // Update the simulation with the new nodes and links
+  simulation.nodes(nodes);
+  simulation.force("link").links(links);
+  simulation.alpha(1).restart();
+
+  updateGraph();
+}
+
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
@@ -145,6 +154,8 @@
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
+      nodes.push({ name: rec.name, nodeType: rec.nodeType, x: clickedNode.x, y: clickedNode.y });
+
     const link = zoomGroup
       .append("g")
       .selectAll("line")
@@ -162,7 +173,7 @@
       .append("g")
       .attr("class", "node")
       .on("dblclick", (event, d) => {
-        fetchDataAndUpdate(d.name, d);
+        fetchDataAndUpdate(d.name);
       });
 
     nodeGroup
@@ -221,8 +232,6 @@
         .attr("y1", (d) => d.source.y)
         .attr("x2", (d) => d.target.x)
         .attr("y2", (d) => d.target.y);
-
-      nodeGroup.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
     });
   }
 
