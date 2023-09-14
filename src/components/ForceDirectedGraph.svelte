@@ -225,4 +225,3 @@
   on:input={() => fetchDataAndUpdate(flavor)}
 />
 <svg id="forceGraph" />
-
