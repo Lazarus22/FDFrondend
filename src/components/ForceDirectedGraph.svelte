@@ -13,6 +13,11 @@
     );
     const data = await res.json();
 
+    // Check if recommendations are null
+    if (data.recommendations === null) {
+      return; // Exit the function early
+    }
+
     if (!nodes.some((node) => node.name === data.flavor)) {
       nodes.push({ name: data.flavor, nodeType: "Flavor" });
     }
@@ -37,6 +42,7 @@
       }
     });
   }
+
   function collapseNode(flavor) {
     // Remove the node from the expandedNodes set
     expandedNodes.delete(flavor);
