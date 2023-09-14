@@ -5,13 +5,14 @@
     left: 10px;
   }
   #forceGraph {
-  background-color: #f6f7fb;
-}
-svg {
-  margin: 0;
-  padding: 0;
-}
+    background-color: #f6f7fb;
+  }
+  :global(body), :global(svg) {
+    margin: 0;
+    padding: 0;
+  }
 </style>
+
 
 
 <script>
