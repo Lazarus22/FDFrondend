@@ -4,11 +4,14 @@
     top: 10px;
     left: 10px;
   }
+
+  #forceGraph {
+  background-color: #f6f7fb;
+}
 </style>
 
 
 <script>
-  import { onMount } from "svelte";
   import * as d3 from "d3";
 
   let flavor = "";
