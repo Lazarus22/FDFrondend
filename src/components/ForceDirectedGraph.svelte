@@ -149,7 +149,7 @@
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
       .attr("pointer-events", "none");
-      
+
     const zoom = d3
       .zoom()
       .scaleExtent([0.1, 10])
@@ -166,7 +166,7 @@
         .attr("x2", (d) => d.target.x)
         .attr("y2", (d) => d.target.y);
 
-      node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+      nodeGroup.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
 
       labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
     });
