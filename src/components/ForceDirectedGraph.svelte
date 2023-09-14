@@ -4,9 +4,12 @@
     top: 10px;
     left: 10px;
   }
-
   #forceGraph {
   background-color: #f6f7fb;
+}
+svg {
+  margin: 0;
+  padding: 0;
 }
 </style>
 
