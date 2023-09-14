@@ -91,6 +91,34 @@
     updateGraph();
   }
 
+
+  function breakText(d) {
+  const words = d.name.split(" ");
+  let lineNumber = 0;
+  let line = "";
+  let tspan = this.append("tspan").attr("x", 0).attr("dy", "0em");
+
+  words.forEach((word) => {
+    let charIndex = 0;
+    while (charIndex < word.length) {
+      const subWord = word.slice(charIndex, charIndex + 8);
+      line = line ? `${line} ${subWord}` : subWord;
+      charIndex += 8;
+
+      if (charIndex < word.length) {
+        line += "-";
+      }
+
+      tspan.text(line);
+      tspan = this.append("tspan").attr("x", 0).attr("dy", "1em");
+      line = "";
+    }
+  });
+}
+
+const minZoomForText = 0.5; // Adjust this value as needed
+
+
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
 
