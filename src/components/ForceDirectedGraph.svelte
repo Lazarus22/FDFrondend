@@ -1,3 +1,12 @@
+<style>
+  #search-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+</style>
+
+
 <script>
   import { onMount } from "svelte";
   import * as d3 from "d3";
@@ -217,13 +226,19 @@
     });
   }
 
-  onMount(() => fetchDataAndUpdate(flavor));
+  function handleKeyDown(event) {
+    if (event.key === "Enter") {
+      fetchDataAndUpdate(flavor);
+    }
+  }
 </script>
 
-<input
-  type="text"
-  bind:value={flavor}
-  placeholder="Enter flavor"
-  on:input={() => fetchDataAndUpdate(flavor)}
-/>
+<div id="search-container">
+  <input
+    type="text"
+    bind:value={flavor}
+    placeholder="Enter flavor"
+    on:keydown={handleKeyDown}
+  />
+</div>
 <svg id="forceGraph" />
