@@ -37,22 +37,17 @@
       }
     });
   }
-  function collapseNode(flavor) {
-  // Remove the flavor from the expandedNodes set
+function collapseNode(flavor) {
+  // Remove the node from the expandedNodes set
   expandedNodes.delete(flavor);
 
-  // Filter out links that are connected to the flavor
-  links = links.filter((link) => link.source.name !== flavor && link.target.name !== flavor);
+  // Filter out links that are connected to the collapsed node
+  links = links.filter(link => link.source.name !== flavor && link.target.name !== flavor);
 
-  // Create a set of node names that are still connected
-  const connectedNodes = new Set();
-  links.forEach((link) => {
-    connectedNodes.add(link.source.name);
-    connectedNodes.add(link.target.name);
+  // Filter out nodes that are not connected to any expanded node, but keep the collapsed node
+  nodes = nodes.filter(node => {
+    return node.name === flavor || links.some(link => link.source.name === node.name || link.target.name === node.name);
   });
-
-  // Filter out nodes that are not connected to any other node
-  nodes = nodes.filter((node) => connectedNodes.has(node.name));
 }
 
   async function fetchDataAndUpdate(flavor) {
@@ -123,12 +118,12 @@
       .attr("pointer-events", "none") // Make text non-interactive
       .text((d) => d.name);
 
-    const zoom = d3
-      .zoom()
-      .scaleExtent([0.1, 10])
-      .on("zoom", (event) => {
-        svg.selectAll("g").attr("transform", event.transform);
-      });
+const zoom = d3
+  .zoom()
+  .scaleExtent([0.1, 10])
+  .on("zoom", (event) => {
+    svg.selectAll("g").attr("transform", event.transform);
+  });
 
     svg.call(zoom);
 
