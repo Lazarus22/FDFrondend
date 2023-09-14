@@ -152,7 +152,7 @@
     nodeGroup
       .append("circle")
       .attr("r", 5)
-      .attr("fill", (d) => colorMap[d.nodeType] || "#000000");
+      .attr("fill", (d) => colorMap[d.nodeType] || "#fee07e");
 
     nodeGroup
       .append("text")
