@@ -97,6 +97,17 @@
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    const colorMap = {
+      Ingredient: "#fee07e",
+      Taste: "#ecb5ca",
+      Volume: "#f16767",
+      Weight: "#ca90c0",
+      Season: "#8cce91",
+      Function: "#f79767",
+      Technique: "#58c7e3",
+      Related: "#d9c8ae",
+    };
+
     const svg = d3
       .select("#forceGraph")
       .attr("width", width)
@@ -138,7 +149,11 @@
         fetchDataAndUpdate(d.name);
       });
 
-    nodeGroup.append("circle").attr("r", 5).attr("fill", "#69b3a2");
+    // Use the color map to set the fill color based on node type
+    nodeGroup
+      .append("circle")
+      .attr("r", 5)
+      .attr("fill", (d) => colorMap[d.nodeType] || "#fee07e"); // Default to black if type is unknown
 
     nodeGroup
       .append("text")
