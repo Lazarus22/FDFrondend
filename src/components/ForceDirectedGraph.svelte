@@ -13,40 +13,58 @@
   });
 
   async function expandNode(flavor) {
-    const res = await fetch(
-      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-    );
-    const data = await res.json();
+  const res = await fetch(
+    `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+  );
+  const data = await res.json();
 
-    // Check if recommendations are null
-    if (data.recommendations === null) {
-      return; // Exit the function early
-    }
+  // Check if recommendations are null
+  if (data.recommendations === null) {
+    return; // Exit the function early
+  }
 
-    if (!nodes.some((node) => node.name === data.flavor)) {
-      nodes.push({ name: data.flavor, nodeType: "Flavor" });
-    }
-    expandedNodes.add(data.flavor);
+  const width = window.innerWidth;
+  const height = window.innerHeight;
 
-    data.recommendations.forEach((rec) => {
-      if (!nodes.some((node) => node.name === rec.name)) {
-        nodes.push({ name: rec.name, nodeType: rec.nodeType });
-      }
-      if (
-        !links.some(
-          (link) =>
-            link.source.name === data.flavor && link.target.name === rec.name
-        )
-      ) {
-        links.push({
-          source: data.flavor,
-          target: rec.name,
-          strength: rec.strength,
-          relationshipType: rec.relationshipType,
-        });
-      }
+  if (!nodes.some((node) => node.name === data.flavor)) {
+    nodes.push({
+      name: data.flavor,
+      nodeType: "Flavor",
+      x: Math.random() * width, // Initialize x
+      y: Math.random() * height, // Initialize y
     });
   }
+  expandedNodes.add(data.flavor);
+
+  data.recommendations.forEach((rec) => {
+    if (!nodes.some((node) => node.name === rec.name)) {
+      nodes.push({
+        name: rec.name,
+        nodeType: rec.nodeType,
+        x: Math.random() * width, // Initialize x
+        y: Math.random() * height, // Initialize y
+      });
+    }
+
+    // If you want to add links as in your old code, you can do so here.
+    // You can adapt the logic from your old code to add links to the new code.
+
+    if (
+      !links.some(
+        (link) =>
+          link.source.name === data.flavor && link.target.name === rec.name
+      )
+    ) {
+      links.push({
+        source: data.flavor,
+        target: rec.name,
+        strength: rec.strength,
+        relationshipType: rec.relationshipType,
+      });
+    }
+  });
+}
+
 
   function collapseNode(flavor) {
     // Remove the node from the expandedNodes set
