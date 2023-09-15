@@ -1,8 +1,7 @@
-
-
 <script>
   import * as d3 from "d3";
   import { onMount } from 'svelte'; 
+
   let flavor = "";
   let expandedNodes = new Set();
   let nodes = [];
@@ -13,57 +12,40 @@
   });
 
   async function expandNode(flavor) {
-  const res = await fetch(
-    `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-  );
-  const data = await res.json();
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
+    const data = await res.json();
 
-  // Check if recommendations are null
-  if (data.recommendations === null) {
-    return; // Exit the function early
-  }
+    // Check if recommendations are null
+    if (data.recommendations === null) {
+      return; // Exit the function early
+    }
 
-  // Get the window dimensions for random positioning
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+    if (!nodes.some((node) => node.name === data.flavor)) {
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+    }
+    expandedNodes.add(data.flavor);
 
-  // Add the main flavor node if it doesn't exist
-  if (!nodes.some((node) => node.name === data.flavor)) {
-    nodes.push({
-      name: data.flavor,
-      nodeType: "Flavor",
-      x: Math.random() * width,  // Initialize x
-      y: Math.random() * height  // Initialize y
+    data.recommendations.forEach((rec) => {
+      if (!nodes.some((node) => node.name === rec.name)) {
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+      }
+      if (
+        !links.some(
+          (link) =>
+            link.source.name === data.flavor && link.target.name === rec.name
+        )
+      ) {
+        links.push({
+          source: data.flavor,
+          target: rec.name,
+          strength: rec.strength,
+          relationshipType: rec.relationshipType,
+        });
+      }
     });
   }
-  expandedNodes.add(data.flavor);
-
-  // Loop through the recommendations and add them
-  data.recommendations.forEach((rec) => {
-    if (!nodes.some((node) => node.name === rec.name)) {
-      nodes.push({
-        name: rec.name,
-        nodeType: rec.nodeType,
-        x: Math.random() * width,  // Initialize x
-        y: Math.random() * height  // Initialize y
-      });
-    }
-    if (
-      !links.some(
-        (link) =>
-          link.source.name === data.flavor && link.target.name === rec.name
-      )
-    ) {
-      links.push({
-        source: data.flavor,
-        target: rec.name,
-        strength: rec.strength,
-        relationshipType: rec.relationshipType,
-      });
-    }
-  });
-}
-
 
   function collapseNode(flavor) {
     // Remove the node from the expandedNodes set
@@ -110,15 +92,14 @@
     });
   }
 
-async function fetchDataAndUpdate(flavor) {
-  if (!expandedNodes.has(flavor)) {
-    await expandNode(flavor);
-  } else {
-    collapseNode(flavor);
+  async function fetchDataAndUpdate(flavor) {
+    if (!expandedNodes.has(flavor)) {
+      await expandNode(flavor);
+    } else {
+      collapseNode(flavor);
+    }
+    updateGraph();
   }
-  updateGraph();
-  window.dispatchEvent(new Event('resize'));  // Trigger resize event
-}
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
@@ -252,7 +233,6 @@ async function fetchDataAndUpdate(flavor) {
 </script>
 
 
-
 <div id="search-container">
   <input
     type="text"
@@ -263,19 +243,3 @@ async function fetchDataAndUpdate(flavor) {
 </div>
 <svg id="forceGraph" />
 
-<style>
-  #search-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 1; /* Make sure it appears above the SVG */
-  }
-  #forceGraph {
-    background-color: #f6f7fb;
-  }
-  :global(body),
-  :global(svg) {
-    margin: 0;
-    padding: 0;
-  }
-</style>
