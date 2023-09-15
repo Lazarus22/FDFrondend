@@ -27,11 +27,6 @@
     }
     expandedNodes.add(data.flavor);
 
-      // Initialize node positions
-  nodes.forEach((node) => {
-    node.x = Math.random() * width;
-    node.y = Math.random() * height;
-  });
 
     data.recommendations.forEach((rec) => {
       if (!nodes.some((node) => node.name === rec.name)) {
