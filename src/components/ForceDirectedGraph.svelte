@@ -1,3 +1,21 @@
+<style>
+  #search-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1; /* Make sure it appears above the SVG */
+  }
+  #forceGraph {
+    background-color: #f6f7fb;
+  }
+  :global(body), :global(svg) {
+    margin: 0;
+    padding: 0;
+  }
+</style>
+
+
+
 <script>
   import * as d3 from "d3";
   import { onMount } from 'svelte'; 
