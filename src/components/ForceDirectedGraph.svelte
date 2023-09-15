@@ -11,66 +11,41 @@
     updateGraph();
   });
 
-async function expandNode(flavor) {
-  const res = await fetch(
-    `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
-  );
-  const data = await res.json();
+  async function expandNode(flavor) {
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
+    );
+    const data = await res.json();
 
-  // Check if recommendations are null
-  if (data.recommendations === null) {
-    return; // Exit the function early
-  }
+    // Check if recommendations are null
+    if (data.recommendations === null) {
+      return; // Exit the function early
+    }
 
-  // Get the window dimensions for center positioning
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+    if (!nodes.some((node) => node.name === data.flavor)) {
+      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+    }
+    expandedNodes.add(data.flavor);
 
-  // Check if the main flavor node exists
-  const existingFlavorNode = nodes.find((node) => node.name === data.flavor);
-
-  // If it doesn't exist, add it
-  if (!existingFlavorNode) {
-    nodes.push({
-      name: data.flavor,
-      nodeType: "Flavor",
-      x: width / 2,  // Initialize x to center
-      y: height / 2  // Initialize y to center
+    data.recommendations.forEach((rec) => {
+      if (!nodes.some((node) => node.name === rec.name)) {
+        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+      }
+      if (
+        !links.some(
+          (link) =>
+            link.source.name === data.flavor && link.target.name === rec.name
+        )
+      ) {
+        links.push({
+          source: data.flavor,
+          target: rec.name,
+          strength: rec.strength,
+          relationshipType: rec.relationshipType,
+        });
+      }
     });
   }
-  expandedNodes.add(data.flavor);
-
-  // Loop through the recommendations and add them
-  data.recommendations.forEach((rec) => {
-    const existingRecNode = nodes.find((node) => node.name === rec.name);
-
-    // If the recommendation node doesn't exist, add it
-    if (!existingRecNode) {
-      nodes.push({
-        name: rec.name,
-        nodeType: rec.nodeType,
-        x: width / 2,  // Initialize x to center
-        y: height / 2  // Initialize y to center
-      });
-    }
-
-    // Check if the link already exists
-    const existingLink = links.some(
-      (link) =>
-        link.source.name === data.flavor && link.target.name === rec.name
-    );
-
-    // If the link doesn't exist, add it
-    if (!existingLink) {
-      links.push({
-        source: data.flavor,
-        target: rec.name,
-        strength: rec.strength,
-        relationshipType: rec.relationshipType,
-      });
-    }
-  });
-}
 
   function collapseNode(flavor) {
     // Remove the node from the expandedNodes set
