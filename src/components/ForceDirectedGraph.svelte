@@ -27,6 +27,12 @@
     }
     expandedNodes.add(data.flavor);
 
+      // Initialize node positions
+  nodes.forEach((node) => {
+    node.x = Math.random() * width;
+    node.y = Math.random() * height;
+  });
+
     data.recommendations.forEach((rec) => {
       if (!nodes.some((node) => node.name === rec.name)) {
         nodes.push({ name: rec.name, nodeType: rec.nodeType });
@@ -230,6 +236,8 @@
   window.addEventListener("resize", () => {
     updateGraph();
   });
+
+
 </script>
 
 <div id="search-container">
