@@ -138,7 +138,7 @@
       )
       .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collide", d3.forceCollide(50));  // Add this line
+      .force("collide", d3.forceCollide(10));  
 
     const link = zoomGroup
       .append("g")
