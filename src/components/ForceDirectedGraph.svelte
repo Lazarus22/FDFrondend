@@ -110,14 +110,15 @@
     });
   }
 
-  async function fetchDataAndUpdate(flavor) {
-    if (!expandedNodes.has(flavor)) {
-      await expandNode(flavor);
-    } else {
-      collapseNode(flavor);
-    }
-    updateGraph();
+async function fetchDataAndUpdate(flavor) {
+  if (!expandedNodes.has(flavor)) {
+    await expandNode(flavor);
+  } else {
+    collapseNode(flavor);
   }
+  updateGraph();
+  window.dispatchEvent(new Event('resize'));  // Trigger resize event
+}
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
