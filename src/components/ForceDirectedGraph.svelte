@@ -7,7 +7,7 @@
   let nodes = [];
   let links = [];
   let simulation;
-  let debounceTimer;
+
 
   onMount(() => {
     updateGraph();
@@ -246,7 +246,11 @@
 
   function handleKeyUp(event) {
   if (event.key === "Enter") {
-    fetchDataAndUpdate(flavor.toLowerCase());
+    if (flavor.toLowerCase() === "clear") {
+      clearGraph();
+    } else {
+      fetchDataAndUpdate(flavor.toLowerCase());
+    }
   }
 }
 
