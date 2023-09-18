@@ -245,10 +245,10 @@
   }
 
   function handleKeyUp(event) {
-    if (event.key === "Enter" && !isFetching) {
-      fetchDataAndUpdate(flavor.toLowerCase());
-    }
+  if (event.key === "Enter") {
+    fetchDataAndUpdate(flavor.toLowerCase());
   }
+}
 
   window.addEventListener("resize", () => {
     updateGraph();
@@ -257,11 +257,11 @@
 
 <div id="search-container">
   <input
-    type="text"
-    bind:value={flavor}
-    placeholder="Enter flavor"
-    on:keyup={handleKeyUp}
-  />
+  type="text"
+  bind:value={flavor}
+  placeholder="Enter flavor"
+  on:keyup={handleKeyUp}
+/>
   <button on:click={clearGraph}>Clear</button>
   <!-- Add this line -->
 </div>
