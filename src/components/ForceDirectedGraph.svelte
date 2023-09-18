@@ -49,8 +49,8 @@
   }
 
   function collapseNode(flavor) {
-  const normalizedFlavor = flavor.toLowerCase(); // Normalize the flavor
-  expandedNodes.delete(normalizedFlavor);
+    const normalizedFlavor = flavor.toLowerCase(); // Normalize the flavor
+    expandedNodes.delete(normalizedFlavor);
 
     // Identify links that are connected to the flavor to be collapsed
     const linksToRemove = links.filter(
@@ -236,11 +236,20 @@
     });
   }
 
-  function handleKeyDown(event) {
-  if (event.key === "Enter") {
-    fetchDataAndUpdate(flavor.toLowerCase()); 
+  let timer;
+
+  function debounce(func, delay) {
+    clearTimeout(timer);
+    timer = setTimeout(func, delay);
   }
-}
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter") {
+      debounce(() => {
+        fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
+      }, 500); // 500ms delay
+    }
+  }
 
   window.addEventListener("resize", () => {
     updateGraph();
