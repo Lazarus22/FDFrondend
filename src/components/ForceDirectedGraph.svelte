@@ -14,12 +14,10 @@
   });
 
   async function expandNode(flavor) {
-    isFetching = true; // Set the flag to true here
     const res = await fetch(
       `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
     );
     const data = await res.json();
-    isFetching = false; // Set the flag back to false
 
     // Check if recommendations are null
     if (data.recommendations === null) {
@@ -107,7 +105,7 @@
     }
     updateGraph();
     isFetching = false; // Reset the flag to false here
-  }
+}
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
