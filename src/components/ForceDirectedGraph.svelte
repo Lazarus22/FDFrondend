@@ -98,6 +98,7 @@
 
   async function fetchDataAndUpdate(flavor) {
     if (isFetching) return; // Check the flag before fetching
+    isFetching = true; // Set the flag to true here
     const normalizedFlavor = flavor.toLowerCase();
     if (!expandedNodes.has(normalizedFlavor)) {
       await expandNode(normalizedFlavor);
@@ -105,6 +106,7 @@
       collapseNode(normalizedFlavor);
     }
     updateGraph();
+    isFetching = false; // Reset the flag to false here
   }
 
   function updateGraph() {
@@ -248,7 +250,7 @@
   }
 
   function handleKeyDown(event) {
-    if (event.key === "Enter" && !isFetching) { 
+    if (event.key === "Enter" && !isFetching) {
       fetchDataAndUpdate(flavor.toLowerCase());
     }
   }
