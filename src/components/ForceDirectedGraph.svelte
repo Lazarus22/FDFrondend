@@ -238,15 +238,15 @@
   }
 
   function clearGraph() {
-    nodes.length = 0; 
-    links.length = 0; 
-    expandedNodes.clear(); 
-    updateGraph(); 
+    nodes.length = 0;
+    links.length = 0;
+    expandedNodes.clear();
+    updateGraph();
   }
 
-  function handleKeyDown(event) {
-    if (event.key === "Enter") {
-      fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
+  function handleKeyUp(event) {
+    if (event.key === "Enter" && !isFetching) {
+      fetchDataAndUpdate(flavor.toLowerCase());
     }
   }
 
@@ -260,7 +260,7 @@
     type="text"
     bind:value={flavor}
     placeholder="Enter flavor"
-    on:keydown={handleKeyDown}
+    on:keydown={handleKeyUp}
   />
   <button on:click={clearGraph}>Clear</button>
   <!-- Add this line -->
