@@ -23,11 +23,10 @@
       return; // Exit the function early
     }
 
-    if (!nodes.some((node) => node.name === data.flavor)) {
-      nodes.push({ name: data.flavor, nodeType: "Flavor" });
+    if (!nodes.some((node) => node.name === data.flavor.toLowerCase())) {
+      nodes.push({ name: data.flavor.toLowerCase(), nodeType: "Flavor" });
     }
-    expandedNodes.add(data.flavor);
-
+    expandedNodes.add(data.flavor.toLowerCase());
 
     data.recommendations.forEach((rec) => {
       if (!nodes.some((node) => node.name === rec.name)) {
@@ -50,8 +49,8 @@
   }
 
   function collapseNode(flavor) {
-    // Remove the node from the expandedNodes set
-    expandedNodes.delete(flavor);
+  const normalizedFlavor = flavor.toLowerCase(); // Normalize the flavor
+  expandedNodes.delete(normalizedFlavor);
 
     // Identify links that are connected to the flavor to be collapsed
     const linksToRemove = links.filter(
@@ -95,17 +94,18 @@
   }
 
   async function fetchDataAndUpdate(flavor) {
-    if (!expandedNodes.has(flavor)) {
-      await expandNode(flavor);
+    const normalizedFlavor = flavor.toLowerCase();
+    if (!expandedNodes.has(normalizedFlavor)) {
+      await expandNode(normalizedFlavor);
     } else {
-      collapseNode(flavor);
+      collapseNode(normalizedFlavor);
     }
     updateGraph();
   }
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
-    
+
     const width = window.innerWidth;
     const height = window.innerHeight;
 
@@ -130,27 +130,29 @@
     const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Define colorScale
 
     if (!simulation) {
-    // Initialize simulation if it's the first time
-    simulation = d3
-      .forceSimulation(nodes)
-      .force(
-        "link",
-        d3
-          .forceLink(links)
-          .id((d) => d.name)
-          .distance(100)
-      )
-      .force("charge", d3.forceManyBody().strength(-500))
-      .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2));
-  } else {
-    // Update the existing simulation
-    simulation.nodes(nodes);  // Update nodes
-    simulation.force("link").links(links);  // Update links
-  }
+      // Initialize simulation if it's the first time
+      simulation = d3
+        .forceSimulation(nodes)
+        .force(
+          "link",
+          d3
+            .forceLink(links)
+            .id((d) => d.name)
+            .distance(100)
+        )
+        .force("charge", d3.forceManyBody().strength(-500))
+        .force(
+          "center",
+          d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2)
+        );
+    } else {
+      // Update the existing simulation
+      simulation.nodes(nodes); // Update nodes
+      simulation.force("link").links(links); // Update links
+    }
 
-  // Restart the simulation
-  simulation.alpha(1).restart();
-      
+    // Restart the simulation
+    simulation.alpha(1).restart();
 
     const link = zoomGroup
       .append("g")
@@ -235,16 +237,14 @@
   }
 
   function handleKeyDown(event) {
-    if (event.key === "Enter") {
-      fetchDataAndUpdate(flavor);
-    }
+  if (event.key === "Enter") {
+    fetchDataAndUpdate(flavor.toLowerCase()); 
   }
+}
 
   window.addEventListener("resize", () => {
     updateGraph();
   });
-
-
 </script>
 
 <div id="search-container">
