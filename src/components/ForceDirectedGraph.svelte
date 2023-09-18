@@ -245,15 +245,10 @@
   }
 
   function handleKeyDown(event) {
-  if (event.key === "Enter") {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      if (!isFetching) {
-        fetchDataAndUpdate(flavor.toLowerCase());
-      }
-    }, 100); // 100 milliseconds
+    if (event.key === "Enter") {
+      fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
+    }
   }
-}
 
   window.addEventListener("resize", () => {
     updateGraph();
