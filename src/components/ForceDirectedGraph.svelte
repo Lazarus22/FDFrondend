@@ -236,6 +236,13 @@
     });
   }
 
+  function clearGraph() {
+    nodes.length = 0; 
+    links.length = 0; 
+    expandedNodes.clear(); 
+    updateGraph(); 
+  }
+
   function handleKeyDown(event) {
     if (event.key === "Enter") {
       fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
@@ -254,6 +261,8 @@
     placeholder="Enter flavor"
     on:keydown={handleKeyDown}
   />
+  <button on:click={clearGraph}>Clear</button>
+  <!-- Add this line -->
 </div>
 <svg id="forceGraph" />
 
