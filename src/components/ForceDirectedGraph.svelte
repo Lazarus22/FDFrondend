@@ -260,7 +260,7 @@
     type="text"
     bind:value={flavor}
     placeholder="Enter flavor"
-    on:keydown={handleKeyUp}
+    on:keyup={handleKeyUp}
   />
   <button on:click={clearGraph}>Clear</button>
   <!-- Add this line -->
