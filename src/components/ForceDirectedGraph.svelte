@@ -7,16 +7,19 @@
   let nodes = [];
   let links = [];
   let simulation;
+  let isFetching = false; 
 
   onMount(() => {
     updateGraph();
   });
 
   async function expandNode(flavor) {
+    isFetching = true; // Set the flag to true here
     const res = await fetch(
       `https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`
     );
     const data = await res.json();
+    isFetching = false; // Set the flag back to false
 
     // Check if recommendations are null
     if (data.recommendations === null) {
@@ -94,6 +97,7 @@
   }
 
   async function fetchDataAndUpdate(flavor) {
+    if (isFetching) return; // Check the flag before fetching
     const normalizedFlavor = flavor.toLowerCase();
     if (!expandedNodes.has(normalizedFlavor)) {
       await expandNode(normalizedFlavor);
@@ -244,8 +248,8 @@
   }
 
   function handleKeyDown(event) {
-    if (event.key === "Enter") {
-      fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
+    if (event.key === "Enter" && !isFetching) { 
+      fetchDataAndUpdate(flavor.toLowerCase());
     }
   }
 
