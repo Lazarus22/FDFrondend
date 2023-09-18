@@ -236,18 +236,9 @@
     });
   }
 
-  let timer;
-
-  function debounce(func, delay) {
-    clearTimeout(timer);
-    timer = setTimeout(func, delay);
-  }
-
   function handleKeyDown(event) {
     if (event.key === "Enter") {
-      debounce(() => {
-        fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
-      }, 500); // 500ms delay
+      fetchDataAndUpdate(flavor.toLowerCase()); // Normalize the flavor before fetching
     }
   }
 
