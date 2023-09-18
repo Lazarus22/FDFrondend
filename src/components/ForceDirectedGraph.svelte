@@ -251,8 +251,10 @@
     } else {
       fetchDataAndUpdate(flavor.toLowerCase());
     }
+    flavor = ""; // Reset the input box
   }
 }
+
 
   window.addEventListener("resize", () => {
     updateGraph();
