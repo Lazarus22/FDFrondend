@@ -7,7 +7,7 @@
   let nodes = [];
   let links = [];
   let simulation;
-  let isFetching = false; 
+  let debounceTimer;
 
   onMount(() => {
     updateGraph();
@@ -95,8 +95,6 @@
   }
 
   async function fetchDataAndUpdate(flavor) {
-    if (isFetching) return; // Check the flag before fetching
-    isFetching = true; // Set the flag to true here
     const normalizedFlavor = flavor.toLowerCase();
     if (!expandedNodes.has(normalizedFlavor)) {
       await expandNode(normalizedFlavor);
@@ -104,8 +102,7 @@
       collapseNode(normalizedFlavor);
     }
     updateGraph();
-    isFetching = false; // Reset the flag to false here
-}
+  }
 
   function updateGraph() {
     d3.select("#forceGraph").selectAll("*").remove();
@@ -248,10 +245,15 @@
   }
 
   function handleKeyDown(event) {
-    if (event.key === "Enter" && !isFetching) {
-      fetchDataAndUpdate(flavor.toLowerCase());
-    }
+  if (event.key === "Enter") {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (!isFetching) {
+        fetchDataAndUpdate(flavor.toLowerCase());
+      }
+    }, 100); // 100 milliseconds
   }
+}
 
   window.addEventListener("resize", () => {
     updateGraph();
