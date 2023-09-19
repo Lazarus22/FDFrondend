@@ -197,7 +197,8 @@
         zoomGroup.attr("transform", event.transform);
 
         // Hide or show labels based on zoom level
-        if (currentZoomScale < 0.5) {
+        if (currentZoomScale < 0.7) {
+          // Updated threshold here
           zoomGroup.selectAll("text").style("display", "none");
         } else {
           zoomGroup.selectAll("text").style("display", "block");
