@@ -7,6 +7,7 @@
   let nodes = [];
   let links = [];
   let simulation;
+  let isDragging = false;
 
   onMount(() => {
     updateGraph();
@@ -193,20 +194,22 @@
       .zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
-        const currentZoomScale = event.transform.k;
-        zoomGroup.attr("transform", event.transform);
+        if (!isDragging) {
+          const currentZoomScale = event.transform.k;
+          zoomGroup.attr("transform", event.transform);
 
-        // Hide or show labels based on zoom level
-        if (currentZoomScale < 0.7) {
-          // Updated threshold here
-          zoomGroup.selectAll("text").style("display", "none");
-        } else {
-          zoomGroup.selectAll("text").style("display", "block");
+          // Hide or show labels based on zoom level
+          if (currentZoomScale < 0.7) {
+            zoomGroup.selectAll("text").style("display", "none");
+          } else {
+            zoomGroup.selectAll("text").style("display", "block");
+          }
         }
       });
 
     // Drag functions
     function dragstarted(event, d) {
+      isDragging = true;
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
@@ -218,6 +221,7 @@
     }
 
     function dragended(event, d) {
+      isDragging = false;
       if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
