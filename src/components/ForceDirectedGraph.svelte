@@ -8,7 +8,6 @@
   let links = [];
   let simulation;
 
-
   onMount(() => {
     updateGraph();
   });
@@ -194,7 +193,15 @@
       .zoom()
       .scaleExtent([0.1, 10])
       .on("zoom", (event) => {
+        const currentZoomScale = event.transform.k;
         zoomGroup.attr("transform", event.transform);
+
+        // Hide or show labels based on zoom level
+        if (currentZoomScale < 0.5) {
+          zoomGroup.selectAll("text").style("display", "none");
+        } else {
+          zoomGroup.selectAll("text").style("display", "block");
+        }
       });
 
     // Drag functions
@@ -245,16 +252,15 @@
   }
 
   function handleKeyUp(event) {
-  if (event.key === "Enter") {
-    if (flavor.toLowerCase() === "clear") {
-      clearGraph();
-    } else {
-      fetchDataAndUpdate(flavor.toLowerCase());
+    if (event.key === "Enter") {
+      if (flavor.toLowerCase() === "clear") {
+        clearGraph();
+      } else {
+        fetchDataAndUpdate(flavor.toLowerCase());
+      }
+      flavor = ""; // Reset the input box
     }
-    flavor = ""; // Reset the input box
   }
-}
-
 
   window.addEventListener("resize", () => {
     updateGraph();
@@ -263,11 +269,11 @@
 
 <div id="search-container">
   <input
-  type="text"
-  bind:value={flavor}
-  placeholder="Enter flavor"
-  on:keyup={handleKeyUp}
-/>
+    type="text"
+    bind:value={flavor}
+    placeholder="Enter flavor"
+    on:keyup={handleKeyUp}
+  />
   <button on:click={clearGraph}>Clear</button>
   <!-- Add this line -->
 </div>
