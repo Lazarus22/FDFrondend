@@ -1,7 +1,6 @@
 <script>
   import ForceDirectedGraph from './components/ForceDirectedGraph.svelte';
-  import Analytics from './Analytics.svelte'; // Make sure the path is correct
-</script>
+  import Analytics from './components/Analytics.svelte'; 
 
 <Analytics />
 
