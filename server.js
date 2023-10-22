@@ -1,18 +1,15 @@
-const express = require('express');
+import sslRedirect from 'heroku-ssl-redirect';
+import express from 'express';
+
 const app = express();
 
-// Other app configuration
+// Enable SSL redirect
+app.use(sslRedirect());
 
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.header('x-forwarded-proto') !== 'https')
-      res.redirect(`https://${req.header('host')}${req.url}`);
-    else
-      next();
-  });
-}
-
-// Define your routes and other middleware
+// Your other middleware and route definitions
+app.get('/', (req, res) => {
+  res.send('hello world');
+});
 
 // Start the server
 const port = process.env.PORT || 3000;
