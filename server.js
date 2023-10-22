@@ -1,10 +1,17 @@
-import sslRedirect from 'heroku-ssl-redirect';
 import express from 'express';
 
 const app = express();
 
-// Enable SSL redirect
-app.use(sslRedirect());
+// Custom HTTPS redirection middleware
+const requireHTTPS = (req, res, next) => {
+  if (!req.secure && process.env.NODE_ENV === 'production') {
+    return res.redirect('https://' + req.get('host') + req.url);
+  }
+  next();
+};
+
+// Use the custom middleware to enforce HTTPS
+app.use(requireHTTPS);
 
 // Your other middleware and route definitions
 app.get('/', (req, res) => {
