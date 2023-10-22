@@ -6,6 +6,7 @@
   "engines": {
     "node": "20.8.0"
   },
+  "main": "server.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",

@@ -1,23 +1,21 @@
 const express = require('express');
-const http = require('http');
-const enforce = require('express-sslify');
-const path = require('path');
-
 const app = express();
 
-// Use enforce.HTTPS() middleware with trustProtoHeader option for Heroku
-app.use(enforce.HTTPS({ trustProtoHeader: true }));
+// Other app configuration
 
-// Serve static files (your Svelte app) from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https')
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    else
+      next();
+  });
+}
 
-// Define your routes and other middleware as needed
-app.get('/', (_, res) => {
-    res.send('Hello, Express-SSLify and Svelte!');
-});
+// Define your routes and other middleware
 
-// Create an HTTP server and listen on a port
+// Start the server
 const port = process.env.PORT || 3000;
-http.createServer(app).listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
