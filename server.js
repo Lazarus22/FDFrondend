@@ -5,13 +5,16 @@ const path = require('path');
 
 const app = express();
 
-// Use enforce.HTTPS() middleware to enforce HTTPS connections
-app.use(enforce.HTTPS());
+// Use enforce.HTTPS() middleware with trustProtoHeader option for Heroku
+app.use(enforce.HTTPS({ trustProtoHeader: true }));
 
 // Serve static files (your Svelte app) from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Handle other server-side routes and logic as needed
+// Define your routes and other middleware as needed
+app.get('/', (_, res) => {
+    res.send('Hello, Express-SSLify and Svelte!');
+});
 
 // Create an HTTP server and listen on a port
 const port = process.env.PORT || 3000;
