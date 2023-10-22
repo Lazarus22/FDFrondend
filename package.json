@@ -27,7 +27,6 @@
     "d3": "latest",
     "express-force-ssl": "^0.3.2",
     "express-sslify": "^1.2.0",
-    "heroku-ssl-redirect": "^0.1.1",
     "sirv-cli": "latest"
   }
 }
