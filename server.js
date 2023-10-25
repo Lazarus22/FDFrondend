@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Catch-all to serve index.html
-app.get('*', (req, res) => {
+app.get('*', (_, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
