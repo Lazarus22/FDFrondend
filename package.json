@@ -13,6 +13,7 @@
     "start": "node server.js"
   },
   "devDependencies": {
+    "express": "latest",
     "@rollup/plugin-commonjs": "latest",
     "@rollup/plugin-node-resolve": "latest",
     "@rollup/plugin-terser": "latest",
