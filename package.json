@@ -6,7 +6,6 @@
   "engines": {
     "node": "latest"
   },
-  "main": "server.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
