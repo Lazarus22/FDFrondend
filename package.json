@@ -10,7 +10,7 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "node server.js"
+    "start": "sirv public --host 0.0.0.0 --no-clear"
   },
   "devDependencies": {
     "express": "latest",
