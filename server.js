@@ -1,5 +1,6 @@
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
+
 const app = express();
 
 // Enforce HTTPS
@@ -11,11 +12,11 @@ app.use((req, res, next) => {
 });
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Catch-all to serve index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 const port = process.env.PORT || 3000;
