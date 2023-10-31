@@ -12,9 +12,11 @@
   let autoCompleteResults = [];
   let selectedIndex = -1;
   let originalSearch = "";
+  let searchInput;
 
   onMount(() => {
     updateGraph();
+    searchInput.focus();
   });
 
   async function expandNode(flavor) {
@@ -344,7 +346,9 @@
     placeholder="Enter flavor"
     on:keyup={handleKeyUp}
     on:keydown={handleKeyDown}
+    bind:this={searchInput}
   />
+
   <button on:click={clearGraph}>Clear</button>
   {#if autoCompleteResults.length}
     <ul>
