@@ -1,8 +1,7 @@
 <script>
   import * as d3 from "d3";
   import { onMount } from "svelte";
-  import debounce from 'lodash.debounce';
-
+  import debounce from "lodash.debounce";
 
   let flavor = "";
   let expandedNodes = new Set();
@@ -261,7 +260,7 @@
     }
 
     const res = await fetch(
-      `https://fdbackend-d0a756cc3435.herokuapp.com/autocomplete?flavor=${flavor}`
+      `https://fdbackend-d0a756cc3435.herokuapp.com/autocomplete?prefix=${flavor}`
     );
     autoCompleteResults = await res.json(); // Assuming the response is an array of strings
   }
