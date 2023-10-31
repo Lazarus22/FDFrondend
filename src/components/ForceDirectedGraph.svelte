@@ -10,6 +10,7 @@
   let simulation;
   let isDragging = false;
   let autoCompleteResults = [];
+  let focusedSuggestionIndex = -1;
 
   onMount(() => {
     updateGraph();
@@ -286,13 +287,31 @@
 
   function handleKeyUp(event) {
     if (event.key === "Enter") {
-      if (flavor.toLowerCase() === "clear") {
-        clearGraph();
+      if (selectedIndex !== -1) {
+        selectAutoCompleteResult(autoCompleteResults[selectedIndex]);
       } else {
-        fetchDataAndUpdate(flavor.toLowerCase());
+        if (flavor.toLowerCase() === "clear") {
+          clearGraph();
+        } else {
+          fetchDataAndUpdate(flavor.toLowerCase());
+        }
       }
       flavor = ""; // Reset the input box
       autoCompleteResults = []; // Clear autocomplete results after a search
+      selectedIndex = -1; // Reset the selected index
+    }
+  }
+
+  function handleKeyDown(event) {
+    if (
+      event.key === "ArrowDown" &&
+      selectedIndex < autoCompleteResults.length - 1
+    ) {
+      selectedIndex++;
+      flavor = autoCompleteResults[selectedIndex];
+    } else if (event.key === "ArrowUp" && selectedIndex >= 0) {
+      selectedIndex--;
+      flavor = selectedIndex === -1 ? "" : autoCompleteResults[selectedIndex];
     }
   }
 
@@ -315,6 +334,7 @@
     bind:value={flavor}
     placeholder="Enter flavor"
     on:keyup={handleKeyUp}
+    on:keydown={handleKeyDown}
   />
   <button on:click={clearGraph}>Clear</button>
   {#if autoCompleteResults.length}
