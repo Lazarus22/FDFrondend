@@ -300,7 +300,9 @@
     links.length = 0;
     expandedNodes.clear();
     updateGraph();
-  }
+    flavor = ""; // Clear the search box
+}
+
 
   window.addEventListener("resize", () => {
     updateGraph();
