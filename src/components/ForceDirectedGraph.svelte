@@ -1,6 +1,8 @@
 <script>
   import * as d3 from "d3";
   import { onMount } from "svelte";
+  import debounce from 'lodash.debounce';
+
 
   let flavor = "";
   let expandedNodes = new Set();

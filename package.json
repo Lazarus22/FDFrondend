@@ -24,9 +24,10 @@
   },
   "dependencies": {
     "d3": "latest",
-    "express": "latest",  
+    "express": "latest",
     "express-force-ssl": "latest",
     "express-sslify": "latest",
+    "lodash.debounce": "^4.0.8",
     "sirv-cli": "latest"
   }
 }
