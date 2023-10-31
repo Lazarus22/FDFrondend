@@ -10,7 +10,8 @@
   let simulation;
   let isDragging = false;
   let autoCompleteResults = [];
-  let selectedIndex  = -1;
+  let selectedIndex = -1;
+  let originalSearch = "";
 
   onMount(() => {
     updateGraph();
@@ -296,9 +297,12 @@
           fetchDataAndUpdate(flavor.toLowerCase());
         }
       }
-      flavor = ""; // Reset the input box
-      autoCompleteResults = []; // Clear autocomplete results after a search
-      selectedIndex = -1; // Reset the selected index
+      originalSearch = "";
+      flavor = "";
+      autoCompleteResults = [];
+      selectedIndex = -1;
+    } else {
+      originalSearch = flavor;
     }
   }
 
@@ -307,13 +311,16 @@
       event.key === "ArrowDown" &&
       selectedIndex < autoCompleteResults.length - 1
     ) {
-      event.preventDefault(); // Prevent default behavior
+      event.preventDefault();
       selectedIndex++;
-      flavor = autoCompleteResults[selectedIndex];
-    } else if (event.key === "ArrowUp" && selectedIndex >= 0) {
-      event.preventDefault(); // Prevent default behavior
-      selectedIndex--;
-      flavor = selectedIndex === -1 ? "" : autoCompleteResults[selectedIndex];
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (selectedIndex > 0) {
+        selectedIndex--;
+      } else if (selectedIndex === 0) {
+        selectedIndex = -1;
+        flavor = originalSearch;
+      }
     }
   }
 
@@ -341,8 +348,8 @@
   <button on:click={clearGraph}>Clear</button>
   {#if autoCompleteResults.length}
     <ul>
-      {#each autoCompleteResults as result}
-        <li>
+      {#each autoCompleteResults as result, index}
+        <li class:selected={index === selectedIndex}>
           <button
             class="autocomplete-button"
             on:click={() => selectAutoCompleteResult(result)}
@@ -405,5 +412,9 @@
   li:hover,
   .autocomplete-button:hover {
     background-color: #f5f5f5;
+  }
+
+  li.selected {
+    background-color: #cccccc;
   }
 </style>
