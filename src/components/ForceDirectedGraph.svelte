@@ -307,9 +307,11 @@
       event.key === "ArrowDown" &&
       selectedIndex < autoCompleteResults.length - 1
     ) {
+      event.preventDefault(); // Prevent default behavior
       selectedIndex++;
       flavor = autoCompleteResults[selectedIndex];
     } else if (event.key === "ArrowUp" && selectedIndex >= 0) {
+      event.preventDefault(); // Prevent default behavior
       selectedIndex--;
       flavor = selectedIndex === -1 ? "" : autoCompleteResults[selectedIndex];
     }
