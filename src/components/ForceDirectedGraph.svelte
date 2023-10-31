@@ -282,8 +282,7 @@
     fetchDataAndUpdate(flavor); // You may want to fetch the data for the selected result
     autoCompleteResults = []; // Clear the autocomplete results
     flavor = ""; // Clear the search box after selecting a result
-}
-
+  }
 
   function handleKeyUp(event) {
     if (event.key === "Enter") {
@@ -303,8 +302,7 @@
     expandedNodes.clear();
     updateGraph();
     flavor = ""; // Clear the search box
-}
-
+  }
 
   window.addEventListener("resize", () => {
     updateGraph();
@@ -353,14 +351,17 @@
     margin: 0;
     padding: 0;
   }
+
   /* Style for the autocomplete dropdown */
   .autocomplete-button {
-    width: 100%; /* Make the button take up the full width of the li */
     text-align: left; /* Align text to the left */
     border: none; /* Remove border */
     background: transparent; /* Make the background transparent */
     cursor: pointer; /* Make the cursor a hand when hovering over the button */
+    width: 100%; /* Make the button take up the full width of the li */
+    padding: 8px 12px; /* Apply padding to the button instead of the li */
   }
+
   ul {
     list-style-type: none;
     margin: 0;
@@ -370,17 +371,17 @@
     border: 1px solid #ddd;
     max-height: 200px;
     overflow-y: auto;
-    width: 200px; /* Adjust as needed */
+    overflow-x: hidden; /* Hide horizontal scrollbar */
+    width: calc(100% - 2px); /* Adjust width to account for border */
   }
+
   li {
-    padding: 8px 12px;
     cursor: pointer;
     width: 100%;
   }
-  li:hover {
+
+  li:hover,
+  .autocomplete-button:hover {
     background-color: #f5f5f5;
-  }
-  ul {
-    width: 200px; /* Set a specific width for the dropdown */
   }
 </style>
