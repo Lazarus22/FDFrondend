@@ -8,6 +8,7 @@
   let links = [];
   let simulation;
   let isDragging = false;
+  let autoCompleteResults = [];
 
   onMount(() => {
     updateGraph();
@@ -249,6 +250,38 @@
     });
   }
 
+  // Function to fetch autocomplete suggestions
+  async function fetchAutoCompleteResults(flavor) {
+    if (flavor.length < 2) {
+      // Fetch suggestions if at least 2 characters are typed
+      autoCompleteResults = [];
+      return;
+    }
+
+    const res = await fetch(
+      `https://fdbackend-d0a756cc3435.herokuapp.com/autocomplete?flavor=${flavor}`
+    );
+    autoCompleteResults = await res.json(); // Assuming the response is an array of strings
+  }
+
+  // Debounce the function to avoid too many requests
+  const debounceFetchAutoCompleteResults = debounce(
+    fetchAutoCompleteResults,
+    200
+  );
+
+  // Watch for changes in the `flavor` variable and fetch autocomplete suggestions
+  $: if (flavor) {
+    debounceFetchAutoCompleteResults(flavor);
+  }
+
+  // Function to handle selecting an autocomplete result
+  function selectAutoCompleteResult(result) {
+    flavor = result;
+    autoCompleteResults = []; // Clear results after selection
+    fetchDataAndUpdate(flavor); // You may want to fetch the data for the selected result
+  }
+
   function clearGraph() {
     nodes.length = 0;
     links.length = 0;
@@ -280,7 +313,21 @@
     on:keyup={handleKeyUp}
   />
   <button on:click={clearGraph}>Clear</button>
-  <!-- Add this line -->
+  {#if autoCompleteResults.length}
+    <ul>
+      {#each autoCompleteResults as result}
+        <li>
+          <button
+            on:click={() => selectAutoCompleteResult(result)}
+            on:keyup={(event) =>
+              event.key === "Enter" ? selectAutoCompleteResult(result) : null}
+          >
+            {result}
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
 </div>
 <svg id="forceGraph" />
 
@@ -298,5 +345,24 @@
   :global(svg) {
     margin: 0;
     padding: 0;
+  }
+  /* Style for the autocomplete dropdown */
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 200px; /* Adjust as needed */
+  }
+  li {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  li:hover {
+    background-color: #f5f5f5;
   }
 </style>
