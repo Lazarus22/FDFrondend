@@ -283,13 +283,6 @@
     fetchDataAndUpdate(flavor); // You may want to fetch the data for the selected result
   }
 
-  function clearGraph() {
-    nodes.length = 0;
-    links.length = 0;
-    expandedNodes.clear();
-    updateGraph();
-  }
-
   function handleKeyUp(event) {
     if (event.key === "Enter") {
       if (flavor.toLowerCase() === "clear") {
@@ -298,7 +291,15 @@
         fetchDataAndUpdate(flavor.toLowerCase());
       }
       flavor = ""; // Reset the input box
+      autoCompleteResults = []; // Clear autocomplete results after a search
     }
+  }
+
+  function clearGraph() {
+    nodes.length = 0;
+    links.length = 0;
+    expandedNodes.clear();
+    updateGraph();
   }
 
   window.addEventListener("resize", () => {
