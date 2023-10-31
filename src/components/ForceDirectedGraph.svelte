@@ -10,7 +10,7 @@
   let simulation;
   let isDragging = false;
   let autoCompleteResults = [];
-  let focusedSuggestionIndex = -1;
+  let selectedIndex  = -1;
 
   onMount(() => {
     updateGraph();
