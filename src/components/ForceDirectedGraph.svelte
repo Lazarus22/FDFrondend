@@ -279,9 +279,11 @@
   // Function to handle selecting an autocomplete result
   function selectAutoCompleteResult(result) {
     flavor = result;
-    autoCompleteResults = []; // Clear results after selection
     fetchDataAndUpdate(flavor); // You may want to fetch the data for the selected result
-  }
+    autoCompleteResults = []; // Clear the autocomplete results
+    flavor = ""; // Clear the search box after selecting a result
+}
+
 
   function handleKeyUp(event) {
     if (event.key === "Enter") {
