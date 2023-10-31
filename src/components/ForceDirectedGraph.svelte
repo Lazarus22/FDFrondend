@@ -324,6 +324,7 @@
       {#each autoCompleteResults as result}
         <li>
           <button
+            class="autocomplete-button"
             on:click={() => selectAutoCompleteResult(result)}
             on:keyup={(event) =>
               event.key === "Enter" ? selectAutoCompleteResult(result) : null}
@@ -353,6 +354,13 @@
     padding: 0;
   }
   /* Style for the autocomplete dropdown */
+  .autocomplete-button {
+    width: 100%; /* Make the button take up the full width of the li */
+    text-align: left; /* Align text to the left */
+    border: none; /* Remove border */
+    background: transparent; /* Make the background transparent */
+    cursor: pointer; /* Make the cursor a hand when hovering over the button */
+  }
   ul {
     list-style-type: none;
     margin: 0;
@@ -367,8 +375,12 @@
   li {
     padding: 8px 12px;
     cursor: pointer;
+    width: 100%;
   }
   li:hover {
     background-color: #f5f5f5;
+  }
+  ul {
+    width: 200px; /* Set a specific width for the dropdown */
   }
 </style>
