@@ -25,4 +25,3 @@ Usage
 
     Navigate to localhost:5000 to view the app.
     Use the interface to add, update, and search for flavors in the database.
-//test 
