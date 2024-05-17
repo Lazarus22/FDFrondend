@@ -1,7 +1,8 @@
 <script>
   import * as d3 from "d3";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import debounce from "lodash.debounce";
+  import { isDarkMode } from '../stores.js';
 
   let flavor = "";
   let expandedNodes = new Set();
@@ -13,10 +14,16 @@
   let selectedIndex = -1;
   let originalSearch = "";
   let searchInput;
+  let currentMode = 'light-mode';
 
   onMount(() => {
     updateGraph();
     searchInput.focus();
+    const unsubscribe = isDarkMode.subscribe((value) => {
+      currentMode = value ? 'dark-mode' : 'light-mode';
+      updateGraph();
+    });
+    onDestroy(unsubscribe);
   });
 
   async function expandNode(flavor) {
@@ -25,9 +32,8 @@
     );
     const data = await res.json();
 
-    // Check if recommendations are null
     if (data.recommendations === null) {
-      return; // Exit the function early
+      return;
     }
 
     if (!nodes.some((node) => node.name === data.flavor.toLowerCase())) {
@@ -56,20 +62,17 @@
   }
 
   function collapseNode(flavor) {
-    const normalizedFlavor = flavor.toLowerCase(); // Normalize the flavor
+    const normalizedFlavor = flavor.toLowerCase();
     expandedNodes.delete(normalizedFlavor);
 
-    // Identify links that are connected to the flavor to be collapsed
     const linksToRemove = links.filter(
       (link) => link.source.name === flavor || link.target.name === flavor
     );
 
-    // Identify nodes that are connected to the flavor to be collapsed
     const nodesToRemove = linksToRemove.map((link) =>
       link.source.name === flavor ? link.target.name : link.source.name
     );
 
-    // Remove links connected to the flavor to be collapsed
     links = links.filter((link) => {
       return !(
         (link.source.name === flavor || link.target.name === flavor) &&
@@ -81,7 +84,6 @@
       );
     });
 
-    // Remove nodes that are not connected to any other expanded node and are not in the expandedNodes set
     nodes = nodes.filter((node) => {
       return (
         expandedNodes.has(node.name) ||
@@ -130,14 +132,15 @@
     const svg = d3
       .select("#forceGraph")
       .attr("preserveAspectRatio", "xMinYMin meet")
-      .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("class", currentMode)
+      .style("background-color", currentMode === 'dark-mode' ? '#333' : '#f6f7fb'); // Ensure consistent background color
 
-    const zoomGroup = svg.append("g"); // Define zoomGroup after svg
+    const zoomGroup = svg.append("g");
 
-    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]); // Define colorScale
+    const colorScale = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]);
 
     if (!simulation) {
-      // Initialize simulation if it's the first time
       simulation = d3
         .forceSimulation(nodes)
         .force(
@@ -148,17 +151,12 @@
             .distance(100)
         )
         .force("charge", d3.forceManyBody().strength(-500))
-        .force(
-          "center",
-          d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2)
-        );
+        .force("center", d3.forceCenter(width / 2, height / 2));
     } else {
-      // Update the existing simulation
-      simulation.nodes(nodes); // Update nodes
-      simulation.force("link").links(links); // Update links
+      simulation.nodes(nodes);
+      simulation.force("link").links(links);
     }
 
-    // Restart the simulation
     simulation.alpha(1).restart();
 
     const link = zoomGroup
@@ -181,11 +179,10 @@
         fetchDataAndUpdate(d.name);
       });
 
-    // Use the color map to set the fill color based on node type
     nodeGroup
       .append("circle")
       .attr("r", 5)
-      .attr("fill", (d) => colorMap[d.nodeType] || "#fee07e"); // Default to black if type is unknown
+      .attr("fill", (d) => colorMap[d.nodeType] || "#fee07e");
 
     nodeGroup
       .append("text")
@@ -194,7 +191,8 @@
       .attr("y", 3)
       .attr("font-size", "12px")
       .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("pointer-events", "none");
+      .attr("pointer-events", "none")
+      .attr("fill", currentMode === 'dark-mode' ? 'white' : 'black');
 
     const zoom = d3
       .zoom()
@@ -204,7 +202,6 @@
           const currentZoomScale = event.transform.k;
           zoomGroup.attr("transform", event.transform);
 
-          // Hide or show labels based on zoom level
           if (currentZoomScale < 0.7) {
             zoomGroup.selectAll("text").style("display", "none");
           } else {
@@ -213,7 +210,6 @@
         }
       });
 
-    // Drag functions
     function dragstarted(event, d) {
       isDragging = true;
       if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -233,7 +229,6 @@
       d.fy = null;
     }
 
-    // Add drag behavior to nodes
     const drag = d3
       .drag()
       .on("start", dragstarted)
@@ -255,10 +250,9 @@
     });
   }
 
-  // Function to fetch autocomplete suggestions
+
   async function fetchAutoCompleteResults(flavor) {
     if (flavor.length < 2) {
-      // Fetch suggestions if at least 2 characters are typed
       autoCompleteResults = [];
       return;
     }
@@ -266,26 +260,23 @@
     const res = await fetch(
       `https://fdbackend-d0a756cc3435.herokuapp.com/autocomplete?prefix=${flavor}`
     );
-    autoCompleteResults = await res.json(); // Assuming the response is an array of strings
+    autoCompleteResults = await res.json();
   }
 
-  // Debounce the function to avoid too many requests
   const debounceFetchAutoCompleteResults = debounce(
     fetchAutoCompleteResults,
     200
   );
 
-  // Watch for changes in the `flavor` variable and fetch autocomplete suggestions
   $: if (flavor) {
     debounceFetchAutoCompleteResults(flavor);
   }
 
-  // Function to handle selecting an autocomplete result
   function selectAutoCompleteResult(result) {
     flavor = result;
-    fetchDataAndUpdate(flavor); // You may want to fetch the data for the selected result
-    autoCompleteResults = []; // Clear the autocomplete results
-    flavor = ""; // Clear the search box after selecting a result
+    fetchDataAndUpdate(flavor);
+    autoCompleteResults = [];
+    flavor = "";
   }
 
   function handleKeyUp(event) {
@@ -331,7 +322,7 @@
     links.length = 0;
     expandedNodes.clear();
     updateGraph();
-    flavor = ""; // Clear the search box
+    flavor = "";
   }
 
   window.addEventListener("resize", () => {
@@ -367,17 +358,17 @@
     </ul>
   {/if}
 </div>
-<svg id="forceGraph" />
+<svg id="forceGraph" class="{currentMode}" />
 
 <style>
   #search-container {
     position: absolute;
     top: 20px;
     left: 20px;
-    z-index: 1; /* Make sure it appears above the SVG */
+    z-index: 1;
   }
   #forceGraph {
-    background-color: #f6f7fb;
+    background-color: var(--graph-background-color, #f6f7fb);
   }
   :global(body),
   :global(svg) {
@@ -385,14 +376,13 @@
     padding: 0;
   }
 
-  /* Style for the autocomplete dropdown */
   .autocomplete-button {
-    text-align: left; /* Align text to the left */
-    border: none; /* Remove border */
-    background: transparent; /* Make the background transparent */
-    cursor: pointer; /* Make the cursor a hand when hovering over the button */
-    width: 100%; /* Make the button take up the full width of the li */
-    padding: 8px 12px; /* Apply padding to the button instead of the li */
+    text-align: left;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+    padding: 8px 12px;
   }
 
   ul {
@@ -404,8 +394,8 @@
     border: 1px solid #ddd;
     max-height: 200px;
     overflow-y: auto;
-    overflow-x: hidden; /* Hide horizontal scrollbar */
-    width: calc(100% - 2px); /* Adjust width to account for border */
+    overflow-x: hidden;
+    width: calc(100% - 2px);
   }
 
   li {
@@ -421,4 +411,13 @@
   li.selected {
     background-color: #cccccc;
   }
+
+  .dark-mode {
+    --graph-background-color: #333; /* Ensure this is consistently applied */
+  }
+
+  .light-mode {
+    --graph-background-color: #f6f7fb; /* Ensure this is consistently applied */
+  }
 </style>
+
