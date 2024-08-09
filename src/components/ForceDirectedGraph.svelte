@@ -381,6 +381,17 @@
   :global(svg) {
     margin: 0;
     padding: 0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  :global(body.light-mode) {
+    background-color: #f6f7fb;
+    color: #000;
+  }
+
+  :global(body.dark-mode) {
+    background-color: #333;
+    color: #fff;
   }
 
   .autocomplete-button {
@@ -420,11 +431,10 @@
   }
 
   .dark-mode {
-    --graph-background-color: #333; /* Ensure this is consistently applied */
+    --graph-background-color: #333;
   }
 
   .light-mode {
-    --graph-background-color: #f6f7fb; /* Ensure this is consistently applied */
+    --graph-background-color: #f6f7fb;
   }
 </style>
-

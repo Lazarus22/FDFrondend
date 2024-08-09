@@ -1,15 +1,28 @@
 <script>
   import SearchInput from './SearchInput.svelte';
+  import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
   import debounce from 'lodash.debounce';
+  import { isDarkMode } from '../stores.js';
 
-  let searchResultsMap = new Map(); // Store results for each search term
+  let searchResultsMap = new Map(); 
   let searchTerms = [];
   let isLoading = false;
   let hasResults = true;
-  let omitSet = new Set(); // Store nodes that should be omitted in lower levels
+  let omitSet = new Set(); 
+  let currentMode = 'light-mode';
 
   const searchQuery = writable('');
+
+  onMount(() => {
+    const unsubscribe = isDarkMode.subscribe((value) => {
+      currentMode = value ? 'dark-mode' : 'light-mode';
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  });
 
   async function fetchRecommendations(flavor) {
     try {
@@ -107,64 +120,121 @@
   }
 </script>
 
-<div id="search-container">
-  <SearchInput bind:value={$searchQuery} on:search={handleSearch} on:clear={clearSearch} />
-</div>
-<div class="results-wrapper">
-  {#if isLoading}
-    <p>Loading...</p>
-  {:else if !hasResults}
-    <p>No results found.</p>
-  {:else}
-    {#each getCommonAndUniqueSets() as {set, nodes}}
-      {#if nodes.length}
-        <div class="results-container">
-          <strong>{"{"}{set.join(', ')}{"}"}</strong>
-          <ul>
-            {#each nodes as node, i}
-              <li on:click={() => handleItemClick(node)} style="cursor: pointer;">
-                {i < nodes.length - 1 ? '├── ' : '└── '}{node}
-              </li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
-    {/each}
-  {/if}
+<!-- Apply the currentMode class to the entire content container -->
+<div class="{currentMode}">
+  <div id="search-container">
+    <SearchInput bind:value={$searchQuery} on:search={handleSearch} on:clear={clearSearch} />
+  </div>
+  <div class="results-wrapper">
+    {#if isLoading}
+      <p>Loading...</p>
+    {:else if !hasResults}
+      <p>No results found.</p>
+    {:else}
+      {#each getCommonAndUniqueSets() as {set, nodes}}
+        {#if nodes.length}
+          <div class="results-container">
+            <strong>{"{"}{set.join(', ')}{"}"}</strong>
+            <ul>
+              {#each nodes as node, i}
+                <li on:click={() => handleItemClick(node)} style="cursor: pointer;">
+                  {i < nodes.length - 1 ? '├── ' : '└── '}{node}
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+      {/each}
+    {/if}
+  </div>
 </div>
 
 <style>
+  :global(body),
+  :global(#search-container),
+  :global(.results-wrapper),
+  :global(.results-container),
+  :global(.search-input) {
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  :global(body.light-mode) {
+    background-color: #f6f7fb;
+    color: #000;
+  }
+
+  :global(body.dark-mode) {
+    background-color: #333;
+    color: #fff;
+  }
+
+  /* Ensure the entire content area respects the current mode */
   #search-container {
     position: relative;
-    margin-bottom: 20px; /* Add margin to push results below the search bar */
-    text-align: left; /* Align the search bar to the left */
-    padding-left: 20px; /* Add padding to the left */
-    padding-top: 20px; /* Add padding to the top */
+    margin-bottom: 0; /* Remove bottom margin to avoid gaps */
+    text-align: left; 
+    padding: 20px 20px 10px 20px; /* Adjust padding */
+    background-color: var(--background-color);
+    color: var(--text-color);
   }
+
   .results-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align everything to the left */
-    padding-left: 20px; /* Consistent padding */
+    align-items: flex-start; 
+    padding: 10px 20px; /* Adjust padding to align with search container */
+    background-color: var(--background-color);
+    color: var(--text-color);
+    min-height: 100vh; /* Ensure it covers the full viewport height */
   }
+
   .results-container {
     margin: 0;
     text-align: left;
     width: 100%;
+    background-color: var(--background-color);
+    color: var(--text-color);
   }
+
   ul {
     list-style-type: none;
     padding: 0;
     margin: 0;
     font-family: monospace;
   }
+
   li {
     padding: 5px 0;
     cursor: pointer;
   }
+
   strong {
     font-size: 1.5em;
     display: block;
     margin-bottom: 10px;
+  }
+
+  .light-mode {
+    --background-color: #f6f7fb;
+    --text-color: #000;
+  }
+
+  .dark-mode {
+    --background-color: #333;
+    --text-color: #fff;
+  }
+
+  .search-input, .search-button {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .search-input::placeholder {
+    color: var(--text-color);
+    opacity: 0.7;
   }
 </style>
