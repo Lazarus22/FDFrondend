@@ -45,18 +45,17 @@
   }
 
   function clearSearch() {
-  searchResultsMap.clear();
-  searchResultsMap = new Map();
-  searchTerms = [];
-  omitSet.clear();
-  $searchQuery = '';
-  isLoading = false;
-  hasResults = false;
-  setTimeout(() => {
-    hasResults = true;
-  }, 0);
-}
-
+    searchResultsMap.clear();
+    searchResultsMap = new Map();
+    searchTerms = [];
+    omitSet.clear();
+    $searchQuery = '';
+    isLoading = false;
+    hasResults = false;
+    setTimeout(() => {
+      hasResults = true;
+    }, 0);
+  }
 
   function handleItemClick(node) {
     if (!searchTerms.includes(node)) {
@@ -82,13 +81,9 @@
 
   function getCommonAndUniqueSets() {
     const powerSet = getPowerSet(searchTerms);
-
-    // Sort power set by length (largest sets first), then alphabetically within the same length
     powerSet.sort((a, b) => b.length - a.length || a.join(', ').localeCompare(b.join(', ')));
-
     let results = [];
-    omitSet.clear(); // Clear omit set before processing the new search
-
+    omitSet.clear();
     powerSet.forEach(set => {
       let commonNodes = null;
       set.forEach(term => {
@@ -99,14 +94,15 @@
           commonNodes = new Set([...commonNodes].filter(node => nodes.has(node)));
         }
       });
-
       const uniqueNodes = new Set([...commonNodes].filter(node => !omitSet.has(node)));
       if (uniqueNodes.size > 0) {
-        results.push({ set, nodes: Array.from(uniqueNodes).sort() });
-        omitSet = new Set([...omitSet, ...uniqueNodes]); // Add these nodes to omit set
+        results.push({
+          set,
+          nodes: Array.from(uniqueNodes).sort()
+        });
+        omitSet = new Set([...omitSet, ...uniqueNodes]);
       }
     });
-
     return results;
   }
 </script>
@@ -114,53 +110,58 @@
 <div id="search-container">
   <SearchInput bind:value={$searchQuery} on:search={handleSearch} on:clear={clearSearch} />
 </div>
-{#if isLoading}
-  <p>Loading...</p>
-{:else if !hasResults}
-  <p>No results found.</p>
-{:else}
-  {#each getCommonAndUniqueSets() as {set, nodes}}
-    {#if nodes.length}
-      <div class="results-container">
-        <strong>{"{"}{set.join(', ')}{"}"}</strong>
-        <ul>
-          {#each nodes as node, i}
-            <li on:click={() => handleItemClick(node)} style="cursor: pointer;">
-              {i < nodes.length - 1 ? '├── ' : '└── '}{node}
-            </li>
-          {/each}
-        </ul>
-      </div>
-    {/if}
-  {/each}
-{/if}
+<div class="results-wrapper">
+  {#if isLoading}
+    <p>Loading...</p>
+  {:else if !hasResults}
+    <p>No results found.</p>
+  {:else}
+    {#each getCommonAndUniqueSets() as {set, nodes}}
+      {#if nodes.length}
+        <div class="results-container">
+          <strong>{"{"}{set.join(', ')}{"}"}</strong>
+          <ul>
+            {#each nodes as node, i}
+              <li on:click={() => handleItemClick(node)} style="cursor: pointer;">
+                {i < nodes.length - 1 ? '├── ' : '└── '}{node}
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+    {/each}
+  {/if}
+</div>
 
 <style>
   #search-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 1;
+    position: relative;
+    margin-bottom: 20px; /* Add margin to push results below the search bar */
+    text-align: left; /* Align the search bar to the left */
+    padding-left: 20px; /* Add padding to the left */
+    padding-top: 20px; /* Add padding to the top */
   }
-  
+  .results-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align everything to the left */
+    padding-left: 20px; /* Consistent padding */
+  }
   .results-container {
-    margin: 0 auto;
+    margin: 0;
     text-align: left;
-    width: fit-content;
+    width: 100%;
   }
-  
   ul {
     list-style-type: none;
     padding: 0;
     margin: 0;
     font-family: monospace;
   }
-
   li {
     padding: 5px 0;
     cursor: pointer;
   }
-
   strong {
     font-size: 1.5em;
     display: block;
