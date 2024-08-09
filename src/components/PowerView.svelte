@@ -1,5 +1,6 @@
 <script>
   import SearchInput from './SearchInput.svelte';
+  import ResultList from './ResultList.svelte';
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
   import debounce from 'lodash.debounce';
@@ -9,7 +10,6 @@
   let searchTerms = [];
   let isLoading = false;
   let hasResults = true;
-  let omitSet = new Set(); 
   let currentMode = 'light-mode';
 
   const searchQuery = writable('');
@@ -61,7 +61,6 @@
     searchResultsMap.clear();
     searchResultsMap = new Map();
     searchTerms = [];
-    omitSet.clear();
     $searchQuery = '';
     isLoading = false;
     hasResults = false;
@@ -70,33 +69,22 @@
     }, 0);
   }
 
-  function handleItemClick(node) {
-    if (!searchTerms.includes(node)) {
-      searchTerms.push(node);
-      debouncedFetch(node);
-    }
-  }
-
-  function getPowerSet(arr) {
+  function getCommonAndUniqueSets() {
     const powerSet = [];
-    const total = Math.pow(2, arr.length);
+    const total = Math.pow(2, searchTerms.length);
     for (let i = 1; i < total; i++) {
       const subset = [];
-      for (let j = 0; j < arr.length; j++) {
+      for (let j = 0; j < searchTerms.length; j++) {
         if (i & (1 << j)) {
-          subset.push(arr[j]);
+          subset.push(searchTerms[j]);
         }
       }
       powerSet.push(subset);
     }
-    return powerSet;
-  }
 
-  function getCommonAndUniqueSets() {
-    const powerSet = getPowerSet(searchTerms);
-    powerSet.sort((a, b) => b.length - a.length || a.join(', ').localeCompare(b.join(', ')));
     let results = [];
-    omitSet.clear();
+    powerSet.sort((a, b) => b.length - a.length || a.join(', ').localeCompare(b.join(', ')));
+    
     powerSet.forEach(set => {
       let commonNodes = null;
       set.forEach(term => {
@@ -107,20 +95,20 @@
           commonNodes = new Set([...commonNodes].filter(node => nodes.has(node)));
         }
       });
-      const uniqueNodes = new Set([...commonNodes].filter(node => !omitSet.has(node)));
-      if (uniqueNodes.size > 0) {
+
+      const uniqueNodes = Array.from(commonNodes);
+      if (uniqueNodes.length > 0) {
         results.push({
           set,
-          nodes: Array.from(uniqueNodes).sort()
+          nodes: uniqueNodes.sort()
         });
-        omitSet = new Set([...omitSet, ...uniqueNodes]);
       }
     });
+
     return results;
   }
 </script>
 
-<!-- Apply the currentMode class to the entire content container -->
 <div class="{currentMode}">
   <div id="search-container">
     <SearchInput bind:value={$searchQuery} on:search={handleSearch} on:clear={clearSearch} />
@@ -131,20 +119,7 @@
     {:else if !hasResults}
       <p>No results found.</p>
     {:else}
-      {#each getCommonAndUniqueSets() as {set, nodes}}
-        {#if nodes.length}
-          <div class="results-container">
-            <strong>{"{"}{set.join(', ')}{"}"}</strong>
-            <ul>
-              {#each nodes as node, i}
-                <li on:click={() => handleItemClick(node)} style="cursor: pointer;">
-                  {i < nodes.length - 1 ? '├── ' : '└── '}{node}
-                </li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-      {/each}
+      <ResultList {searchTerms} {searchResultsMap} />
     {/if}
   </div>
 </div>
