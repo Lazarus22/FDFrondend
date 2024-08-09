@@ -1,8 +1,9 @@
 <script>
-  import ForceDirectedGraph from './components/ForceDirectedGraph.svelte';
+  import ForceDirectedGraph from './components/Graph.svelte';
   import PowerView from './components/PowerView.svelte';
+  import SearchBar from './components/SearchBar.svelte';
   import Analytics from './components/Analytics.svelte';
-  import { isDarkMode, mode } from './stores.js';
+  import { isDarkMode, mode, searchQuery } from './stores.js';
   import { onMount } from 'svelte';
 
   let darkMode = false;
@@ -34,6 +35,10 @@
   <button on:click={toggleMode} class="mode-toggle">
     {currentMode === 'graph' ? 'Switch to Power Mode' : 'Switch to Graph Mode'}
   </button>
+  
+  <!-- Insert the SearchBar component -->
+  <SearchBar />
+
   <main>
     {#if currentMode === 'graph'}
       <ForceDirectedGraph />

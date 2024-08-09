@@ -3,9 +3,12 @@
 
   export let searchTerms;
   export let searchResultsMap;
+  export let onItemClick; // Allow a function to be passed in for handling item clicks
 
   function handleItemClick(node) {
-    // Handle item click (e.g., refetch, update results)
+    if (typeof onItemClick === 'function') {
+      onItemClick(node);
+    }
   }
 
   function getCommonAndUniqueSets() {
@@ -64,5 +67,28 @@
 </div>
 
 <style>
-  /* Add relevant styles */
+  .results-container {
+    margin: 0;
+    padding: 10px 0;
+    text-align: left; /* Ensure the text aligns to the left */
+  }
+
+  ul {
+    list-style-type: none; /* Remove default bullet points */
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    padding: 5px 0;
+    cursor: pointer;
+    text-align: left; /* Ensure text is aligned to the left */
+  }
+
+  strong {
+    font-size: 1.5em;
+    display: block;
+    margin-bottom: 10px;
+    text-align: left; /* Ensure the set titles align to the left */
+  }
 </style>
