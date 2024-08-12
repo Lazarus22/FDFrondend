@@ -57,8 +57,14 @@
       <strong>{"{"}{set.join(', ')}{"}"}</strong>
       <ul>
         {#each nodes as node, i (node)}
-          <li on:click={() => handleItemClick(node)} style="cursor: pointer;">
-            {i < nodes.length - 1 ? '├── ' : '└── '}{node}
+          <li>
+            <button 
+              on:click={() => handleItemClick(node)} 
+              on:keydown={(e) => e.key === 'Enter' && handleItemClick(node)} 
+              style="cursor: pointer; background: none; border: none; padding: 5px 0; text-align: left; width: 100%;"
+            >
+              {i < nodes.length - 1 ? '├── ' : '└── '}{node}
+            </button>
           </li>
         {/each}
       </ul>
@@ -70,25 +76,29 @@
   .results-container {
     margin: 0;
     padding: 10px 0;
-    text-align: left; /* Ensure the text aligns to the left */
   }
-
   ul {
-    list-style-type: none; /* Remove default bullet points */
+    list-style-type: none;
     padding: 0;
     margin: 0;
+    font-family: monospace;
   }
-
   li {
-    padding: 5px 0;
-    cursor: pointer;
-    text-align: left; /* Ensure text is aligned to the left */
+    padding: 0;
   }
-
+  button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 5px 0;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    font-size: inherit;
+  }
   strong {
     font-size: 1.5em;
     display: block;
     margin-bottom: 10px;
-    text-align: left; /* Ensure the set titles align to the left */
   }
 </style>

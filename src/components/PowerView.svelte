@@ -140,8 +140,14 @@
             <strong>{"{"}{set.join(', ')}{"}"}</strong>
             <ul>
               {#each nodes as node, i (node)}
-                <li tabindex="0" on:click={() => handleItemClick(node)} on:keydown={(e) => e.key === 'Enter' && handleItemClick(node)} style="cursor: pointer;">
-                  {i < nodes.length - 1 ? '├── ' : '└── '}{node}
+                <li>
+                  <button 
+                    on:click|preventDefault={() => handleItemClick(node)} 
+                    on:keydown|preventDefault={(e) => e.key === 'Enter' && handleItemClick(node)} 
+                    style="cursor: pointer; background: none; border: none; padding: 5px 0; text-align: left; width: 100%;"
+                  >
+                    {i < nodes.length - 1 ? '├── ' : '└── '}{node}
+                  </button>
                 </li>
               {/each}
             </ul>
@@ -153,7 +159,6 @@
     {/if}
   </div>
 </div>
-
 <style>
   .results-wrapper {
     padding: 20px;
@@ -169,12 +174,19 @@
     margin: 0;
     font-family: monospace;
   }
-
   li {
-    padding: 5px 0;
-    cursor: pointer;
+    padding: 0;
   }
-
+  button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 5px 0;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    font-size: inherit;
+  }
   strong {
     font-size: 1.5em;
     display: block;
