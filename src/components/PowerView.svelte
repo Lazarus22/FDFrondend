@@ -4,46 +4,79 @@
 
   let isLoading = false;
   let hasResults = true;
+  let computedResults = [];
 
   // Synchronize local state with global state on mount
   onMount(() => {
-    const unsubscribe = searchQuery.subscribe(async (flavor) => {
-      if (flavor) {
+    const unsubscribeSearch = searchQuery.subscribe(async (flavor) => {
+      if (flavor && flavor.trim() !== '') {
         await fetchRecommendations(flavor);
       }
     });
 
+    const unsubscribeResultsMap = searchResultsMap.subscribe(map => {
+      if (map.size === 0) {
+        clearResults();
+      } else {
+        computeResults(); // Recompute results whenever the map is updated
+      }
+    });
+
+    const unsubscribeSearchTerms = searchTerms.subscribe(terms => {
+      if (terms.length === 0) {
+        clearResults();
+      } else {
+        computeResults(); // Recompute results whenever the terms are updated
+      }
+    });
+
     return () => {
-      unsubscribe();
+      unsubscribeSearch();
+      unsubscribeResultsMap();
+      unsubscribeSearchTerms();
     };
   });
 
   async function fetchRecommendations(flavor) {
     isLoading = true;
     try {
-      const response = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${flavor}`);
+      const response = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${encodeURIComponent(flavor)}`);
       const data = await response.json();
 
-      searchTerms.update(terms => {
-        if (!terms.includes(flavor)) terms.push(flavor);
-        return terms;
-      });
+      if (data.recommendations && data.recommendations.length > 0) {
+        searchTerms.update(terms => {
+          if (!terms.includes(flavor)) terms.push(flavor);
+          return terms;
+        });
 
-      searchResultsMap.update(map => {
-        const existingResults = map.get(flavor) || [];
-        const newResults = data.recommendations.map(result => result.name).sort();
-        const mergedResults = [...new Set([...existingResults, ...newResults])];
-        map.set(flavor, mergedResults);
-        return map;
-      });
+        searchResultsMap.update(map => {
+          const existingResults = map.get(flavor) || [];
+          const newResults = data.recommendations.map(result => result.name).sort();
+          const mergedResults = [...new Set([...existingResults, ...newResults])];
+          map.set(flavor, mergedResults);
+          return map;
+        });
 
-      hasResults = true;
+        hasResults = true;
+      } else {
+        hasResults = false;
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       hasResults = false;
     } finally {
       isLoading = false;
     }
+  }
+
+  function clearResults() {
+    hasResults = false;
+    isLoading = false;
+    computedResults = []; // Ensure computedResults is cleared
+  }
+
+  function computeResults() {
+    computedResults = getCommonAndUniqueSets();
   }
 
   function getCommonAndUniqueSets() {
@@ -77,6 +110,7 @@
       });
 
       const uniqueNodes = Array.from(commonNodes || []);
+
       if (uniqueNodes.length > 0) {
         results.push({
           set,
@@ -89,7 +123,7 @@
   }
 
   function handleItemClick(node) {
-    console.log(`Item clicked: ${node}`);
+    searchQuery.set(node); // Treat the clicked word as a new search query
   }
 </script>
 
@@ -100,8 +134,8 @@
     {:else if !hasResults}
       <p>No results found.</p>
     {:else}
-      {#if getCommonAndUniqueSets() && getCommonAndUniqueSets().length > 0}
-        {#each getCommonAndUniqueSets() as {set, nodes} (set.join(', '))}
+      {#if computedResults.length > 0}
+        {#each computedResults as {set, nodes} (set.join(', '))}
           <div class="results-container">
             <strong>{"{"}{set.join(', ')}{"}"}</strong>
             <ul>

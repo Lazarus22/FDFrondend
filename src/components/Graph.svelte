@@ -1,7 +1,7 @@
 <script>
   import * as d3 from "d3";
   import { onMount } from "svelte";
-  import { searchQuery, searchResultsMap, searchTerms, isDarkMode } from '../stores.js';  // Import isDarkMode
+  import { searchQuery, searchResultsMap, searchTerms, isDarkMode } from '../stores.js';
 
   let nodes = [];
   let links = [];
@@ -19,6 +19,12 @@
       }
     });
 
+    const unsubscribeSearchResults = searchResultsMap.subscribe(map => {
+      if (map.size === 0) {
+        clearGraph();  // Clear the graph when the search results are cleared
+      }
+    });
+
     const unsubscribeMode = isDarkMode.subscribe(value => {
       currentMode = value ? 'dark-mode' : 'light-mode';
       updateGraph();  // Update graph colors when mode changes
@@ -26,6 +32,7 @@
 
     return () => {
       unsubscribeSearch();
+      unsubscribeSearchResults();
       unsubscribeMode();
     };
   });
@@ -76,6 +83,12 @@
     });
 
     updateGraph();  // Re-render the graph with the new data
+  }
+
+  function clearGraph() {
+    nodes = [];
+    links = [];
+    updateGraph(); // Re-render the graph to reflect the cleared state
   }
 
   function updateGraph() {

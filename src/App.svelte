@@ -80,4 +80,11 @@
   .mode-toggle {
     right: 10px;
   }
+
+  @media (max-width: 600px) {
+    /* Adjustments for mobile screens */
+    .dark-mode-toggle, .mode-toggle {
+      right: 20px; /* Reduce spacing for smaller screens */
+    }
+  }
 </style>

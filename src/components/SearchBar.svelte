@@ -1,6 +1,6 @@
 <script>
   import { searchQuery, autoCompleteResults, fetchAutoCompleteResults } from '../stores.js';
-  import { onMount } from 'svelte';
+  import ClearButton from './ClearButton.svelte';
 
   let flavor = '';
   let selectedIndex = -1;
@@ -13,7 +13,8 @@
 
   function selectAutoCompleteResult(result) {
     searchQuery.set(result);  // Update the searchQuery store
-    autoCompleteResults.set([]);
+    autoCompleteResults.set([]);  // Clear autocomplete results
+    flavor = '';  // Clear the search bar input
   }
 
   function handleKeyUp(event) {
@@ -22,6 +23,8 @@
         selectAutoCompleteResult($autoCompleteResults[selectedIndex]);
       } else {
         searchQuery.set(flavor);  // Set the search query directly when Enter is pressed
+        autoCompleteResults.set([]);  // Clear autocomplete results after Enter key is pressed
+        flavor = '';  // Clear the search bar input
       }
     }
   }
@@ -37,7 +40,6 @@
   }
 </script>
 
-
 <div id="search-container">
   <input
     type="text"
@@ -47,7 +49,7 @@
     on:keydown={handleKeyDown}
     bind:this={searchInput}
   />
-  <button on:click={() => searchQuery.set('')}>Clear</button>
+  <ClearButton />
   {#if $autoCompleteResults.length}
     <ul>
       {#each $autoCompleteResults as result, index}
@@ -67,7 +69,6 @@
 </div>
 
 <style>
-  /* Basic styling for search bar and autocomplete */
   #search-container {
     position: relative;
     margin-bottom: 20px;
@@ -75,6 +76,7 @@
 
   input {
     width: 100%;
+    max-width: 300px;
     padding: 10px;
     font-size: 1em;
   }
@@ -89,7 +91,10 @@
     overflow-y: auto;
     position: absolute;
     width: 100%;
+    max-width: 300px;
     z-index: 1000;
+    top: 100%;
+    left: 0;
   }
 
   li {
@@ -99,15 +104,6 @@
 
   li.selected {
     background-color: #ddd;
-  }
-
-  button {
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    text-align: left;
   }
 
   .autocomplete-button {
