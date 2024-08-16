@@ -1,7 +1,23 @@
 import express from 'express';
 import path from 'path';
+import helmet from 'helmet';
 
-const app = express();  // Initialize the express app
+const app = express();
+
+// Use helmet to set Content Security Policy
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'", "https:"],
+    scriptSrc: ["'self'", "https:"],
+    imgSrc: ["'self'", "data:", "https:"],
+    connectSrc: ["'self'", "https:"],
+    fontSrc: ["'self'", "https:"],
+    frameSrc: ["'none'"],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+  }
+}));
 
 // Enforce HTTPS
 app.use((req, res, next) => {
