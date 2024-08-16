@@ -1,34 +1,55 @@
 {
-  "name": "svelte-app",
-  "version": "latest",
+  "name": "my-skeleton-app",
+  "version": "0.0.1",
   "private": true,
-  "type": "module",
-  "engines": {
-    "node": "latest"
-  },
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "start": "sirv public --host 0.0.0.0 --no-clear"
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "npm run test:integration && npm run test:unit",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write .",
+    "test:integration": "playwright test",
+    "test:unit": "vitest",
+    "start": "node server.js"
   },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "latest",
-    "@rollup/plugin-node-resolve": "latest",
-    "@rollup/plugin-terser": "latest",
-    "@types/d3": "latest",
-    "rollup": "latest",
-    "rollup-plugin-css-only": "latest",
-    "rollup-plugin-livereload": "latest",
-    "rollup-plugin-svelte": "latest",
-    "svelte": "latest"
+  "engines": {
+    "node": "20.x"
   },
   "dependencies": {
-    "d3": "latest",
-    "express": "latest",
-    "express-force-ssl": "latest",
-    "express-sslify": "latest",
-    "lodash": "^4.17.21",
-    "lodash.debounce": "^4.0.8",
-    "sirv-cli": "latest"
-  }
+    "@sveltejs/kit": "^2.0.0",
+    "d3": "^7.9.0",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.28.1",
+    "@skeletonlabs/skeleton": "2.10.2",
+    "@skeletonlabs/tw-plugin": "0.4.0",
+    "@sveltejs/adapter-auto": "^3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@tailwindcss/forms": "0.5.7",
+    "@tailwindcss/typography": "0.5.14",
+    "@types/d3": "^7.4.3",
+    "@types/eslint": "^9.6.0",
+    "@types/node": "22.3.0",
+    "autoprefixer": "10.4.20",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-svelte": "^2.36.0",
+    "globals": "^15.0.0",
+    "postcss": "8.4.41",
+    "prettier": "^3.1.1",
+    "prettier-plugin-svelte": "^3.1.2",
+    "svelte": "^4.2.7",
+    "svelte-check": "^3.6.0",
+    "tailwindcss": "3.4.10",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^5.0.3",
+    "vite-plugin-tailwind-purgecss": "^0.3.3",
+    "vitest": "^2.0.0"
+  },
+  "type": "module"
 }

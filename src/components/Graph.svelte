@@ -1,67 +1,83 @@
-<script>
-  import * as d3 from "d3";
-  import { onMount } from "svelte";
-  import { searchQuery, searchResultsMap, searchTerms, isDarkMode } from '../stores.js';
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import * as d3 from 'd3';
+  import type { GraphNode, Link } from '../types';
+  import { get } from 'svelte/store';
+  import { searchQuery, searchTerms, chipToRemove, graphNodes, graphLinks } from '../stores';
 
-  let nodes = [];
-  let links = [];
-  let simulation;
-  let isDragging = false;
-  let currentMode = 'light-mode';
+  let nodes: GraphNode[] = [];
+  let links: Link[] = [];
+  let simulation: d3.Simulation<GraphNode, undefined> | undefined;
+
+  // Subscribe to stores
+  graphNodes.subscribe(value => nodes = value);
+  graphLinks.subscribe(value => links = value);
+
+  // Define the color map based on nodeType and edge strength
+  const colorMap: { [key: string]: string } = {
+    Ingredient: "#fee07e",
+    Taste: "#ecb5ca",
+    Volume: "#f16767",
+    Weight: "#ca90c0",
+    Season: "#8cce91",
+    Function: "#f79767",
+    Technique: "#58c7e3",
+    Related: "#d9c8ae"
+  };
+
+  const edgeColorMap: { [key: number]: string } = {
+    1: "#ccc",  // Light gray
+    2: "#999",  // Medium gray
+    3: "#666",  // Darker gray
+    4: "#000"   // Black
+  };
 
   onMount(() => {
-    // Initialize nodes and links from the global search state
+    initializeGraph();
     initializeFromGlobalState();
 
     const unsubscribeSearch = searchQuery.subscribe(async (flavor) => {
       if (flavor) {
-        await fetchDataAndUpdate(flavor);  // Trigger data fetching and graph update
+        await fetchDataAndUpdate(flavor);
       }
     });
 
-    const unsubscribeSearchResults = searchResultsMap.subscribe(map => {
-      if (map.size === 0) {
-        clearGraph();  // Clear the graph when the search results are cleared
+    const unsubscribeChipRemove = chipToRemove.subscribe(chip => {
+      if (chip) {
+        removeChip({ detail: { chipValue: chip } });
+        chipToRemove.set(null); // Clear the store after handling
       }
-    });
-
-    const unsubscribeMode = isDarkMode.subscribe(value => {
-      currentMode = value ? 'dark-mode' : 'light-mode';
-      updateGraph();  // Update graph colors when mode changes
     });
 
     return () => {
       unsubscribeSearch();
-      unsubscribeSearchResults();
-      unsubscribeMode();
+      unsubscribeChipRemove();
     };
   });
 
   async function initializeFromGlobalState() {
-    const terms = $searchTerms;
+    const terms = get(searchTerms);
     for (const term of terms) {
       await fetchDataAndUpdate(term);
     }
   }
 
-  async function fetchDataAndUpdate(flavor) {
+  async function fetchDataAndUpdate(flavor: string) {
     const normalizedFlavor = flavor.toLowerCase();
     const res = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${normalizedFlavor}`);
     const data = await res.json();
 
-    if (data.recommendations === null) {
-      return;
-    }
+    if (data.recommendations === null) return;
 
     if (!nodes.some(node => node.name === data.flavor.toLowerCase())) {
-      nodes.push({ name: data.flavor.toLowerCase(), nodeType: "Flavor" });
+      nodes.push({ name: data.flavor.toLowerCase(), nodeType: "Flavor", relationshipType: "main" });
     }
 
-    data.recommendations.forEach(rec => {
+    data.recommendations.forEach((rec: any) => {
       if (!nodes.some(node => node.name === rec.name)) {
-        nodes.push({ name: rec.name, nodeType: rec.nodeType });
+        nodes.push({ name: rec.name, nodeType: rec.nodeType, relationshipType: rec.relationshipType });
       }
-      if (!links.some(link => link.source === data.flavor.toLowerCase() && link.target === rec.name)) {
+      if (!links.some(link => (link.source as GraphNode).name === data.flavor.toLowerCase() && (link.target as GraphNode).name === rec.name)) {
         links.push({
           source: data.flavor.toLowerCase(),
           target: rec.name,
@@ -71,172 +87,111 @@
       }
     });
 
-    // Persist the data back to the global store
-    searchResultsMap.update(map => {
-      map.set(flavor, [...(map.get(flavor) || []), ...data.recommendations.map(r => r.name)]);
-      return map;
-    });
-
-    searchTerms.update(terms => {
-      if (!terms.includes(flavor)) terms.push(flavor);
-      return terms;
-    });
-
-    updateGraph();  // Re-render the graph with the new data
+    updateGraph();
   }
 
-  function clearGraph() {
-    nodes = [];
-    links = [];
-    updateGraph(); // Re-render the graph to reflect the cleared state
-  }
-
-  function updateGraph() {
-    d3.select("#forceGraph").selectAll("*").remove();
+  function initializeGraph() {
+    if (simulation) return; // Prevent re-initialization if already initialized
 
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    const colorMap = {
-      Ingredient: "#fee07e",
-      Taste: "#ecb5ca",
-      Volume: "#f16767",
-      Weight: "#ca90c0",
-      Season: "#8cce91",
-      Function: "#f79767",
-      Technique: "#58c7e3",
-      Related: "#d9c8ae",
-    };
+    simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links).id((d: any) => d.name).distance(100))
+      .force('charge', d3.forceManyBody().strength(-500))
+      .force('center', d3.forceCenter(width / 2, height / 2));
 
-    const svg = d3
-      .select("#forceGraph")
-      .attr("preserveAspectRatio", "xMinYMin meet")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("class", currentMode)
-      .style("background-color", currentMode === 'dark-mode' ? '#333' : '#f6f7fb'); 
+    simulation.on('tick', () => {
+      d3.selectAll<SVGLineElement, Link>('line.link')
+        .attr('x1', d => (d.source as GraphNode).x ?? 0)
+        .attr('y1', d => (d.source as GraphNode).y ?? 0)
+        .attr('x2', d => (d.target as GraphNode).x ?? 0)
+        .attr('y2', d => (d.target as GraphNode).y ?? 0);
 
-    const zoomGroup = svg.append("g");
-
-    const colorScaleLight = d3.scaleLinear().domain([1, 4]).range(["#ccc", "#000"]);
-    const colorScaleDark = d3.scaleLinear().domain([1, 4]).range(["#666", "#fff"]);
-
-    const colorScale = currentMode === 'dark-mode' ? colorScaleDark : colorScaleLight;
-
-    if (!simulation) {
-      simulation = d3
-        .forceSimulation(nodes)
-        .force(
-          "link",
-          d3
-            .forceLink(links)
-            .id((d) => d.name)
-            .distance(100)
-        )
-        .force("charge", d3.forceManyBody().strength(-500))
-        .force("center", d3.forceCenter(width / 2, height / 2));
-    } else {
-      simulation.nodes(nodes);
-      simulation.force("link").links(links);
-    }
-
-    simulation.alpha(1).restart();
-
-    const link = zoomGroup
-      .append("g")
-      .selectAll("line")
-      .data(links)
-      .enter()
-      .append("line")
-      .attr("stroke", (d) => colorScale(d.strength))
-      .attr("stroke-width", 1);
-
-    const nodeGroup = zoomGroup
-      .append("g")
-      .selectAll("g.node")
-      .data(nodes)
-      .enter()
-      .append("g")
-      .attr("class", "node")
-      .on("dblclick", (event, d) => {
-        fetchDataAndUpdate(d.name);
-      });
-
-    nodeGroup
-      .append("circle")
-      .attr("r", 5)
-      .attr("fill", (d) => colorMap[d.nodeType] || "#fee07e");
-
-    nodeGroup
-      .append("text")
-      .text((d) => d.name)
-      .attr("x", 6)
-      .attr("y", 3)
-      .attr("font-size", "12px")
-      .attr("font-family", "Arial, Helvetica, sans-serif")
-      .attr("pointer-events", "none")
-      .attr("fill", currentMode === 'dark-mode' ? 'white' : 'black');
-
-    const zoom = d3
-      .zoom()
-      .scaleExtent([0.1, 10])
-      .on("zoom", (event) => {
-        if (!isDragging) {
-          const currentZoomScale = event.transform.k;
-          zoomGroup.attr("transform", event.transform);
-
-          if (currentZoomScale < 0.7) {
-            zoomGroup.selectAll("text").style("display", "none");
-          } else {
-            zoomGroup.selectAll("text").style("display", "block");
-          }
-        }
-      });
-
-    function dragstarted(event, d) {
-      isDragging = true;
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-      d.fx = event.x;
-      d.fy = event.y;
-    }
-
-    function dragended(event, d) {
-      isDragging = false;
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
-    }
-
-    const drag = d3
-      .drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
-
-    nodeGroup.call(drag);
-
-    svg.call(zoom).on("dblclick.zoom", null);
-
-    simulation.on("tick", () => {
-      link
-        .attr("x1", (d) => d.source.x)
-        .attr("y1", (d) => d.source.y)
-        .attr("x2", (d) => d.target.x)
-        .attr("y2", (d) => d.target.y);
-
-      nodeGroup.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+      d3.selectAll<SVGGElement, GraphNode>('g.node')
+        .attr('transform', d => `translate(${d.x ?? 0}, ${d.y ?? 0})`);
     });
+  }
+
+  function updateGraph() {
+    // Persist nodes and links to the store
+    graphNodes.set(nodes);
+    graphLinks.set(links);
+
+    const svg = d3.select<SVGSVGElement, unknown>("#forceGraph")
+      .attr("width", window.innerWidth)
+      .attr("height", window.innerHeight);
+    const zoomGroup = svg.select<SVGGElement>("g");
+
+    zoomGroup.selectAll<SVGLineElement, Link>("line")
+      .data(links, (d: any) => `${(d.source as GraphNode).name}-${(d.target as GraphNode).name}`)
+      .join("line")
+      .attr("class", "link")
+      .attr("stroke-width", 1)  // Keep the stroke width consistent
+      .attr("stroke", (d) => edgeColorMap[d.strength] || "#ccc");  // Apply color based on strength
+
+    const nodeGroup = zoomGroup.selectAll<SVGGElement, GraphNode>("g.node")
+      .data(nodes, (d: any) => d.name)
+      .join(
+        enter => {
+          const g = enter.append("g").attr("class", "node");
+
+          g.append("circle")
+            .attr("r", 5)
+            .attr("fill", (d) => colorMap[d.nodeType as keyof typeof colorMap] || "#fee07e"); // Apply color based on nodeType
+
+          g.append("text")
+            .text(d => d.name)
+            .attr("x", 6)
+            .attr("y", 3)
+            .attr("font-size", "12px")
+            .attr("font-family", "Arial, Helvetica, sans-serif")
+            .attr("pointer-events", "none");
+
+          return g;
+        },
+        update => update,
+        exit => exit.remove()
+      );
+
+    svg.call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 10]).on("zoom", event => zoomGroup.attr("transform", event.transform)));
+
+    if (simulation) {
+      simulation.nodes(nodes);
+      const linkForce = simulation.force<d3.ForceLink<GraphNode, Link>>('link');
+      if (linkForce) {
+        linkForce.links(links);
+      }
+      simulation.alpha(1).restart();
+    }
+  }
+
+  function removeChip(event: { detail: { chipValue: string } }) {
+    const chip = event.detail.chipValue;
+
+    nodes = nodes.filter(node => node.name !== chip);
+
+    const connectedNodes = links
+      .filter(link => (link.source as GraphNode).name === chip || (link.target as GraphNode).name === chip)
+      .map(link => (link.source as GraphNode).name === chip ? (link.target as GraphNode).name : (link.source as GraphNode).name);
+
+    const uniqueNodes = connectedNodes.filter(nodeName => {
+      const connectedLinks = links.filter(link => (link.source as GraphNode).name === nodeName || (link.target as GraphNode).name === nodeName);
+      return connectedLinks.length === 1; // Keep only nodes with one connection
+    });
+
+    nodes = nodes.filter(node => !uniqueNodes.includes(node.name));
+    links = links.filter(link => 
+      (link.source as GraphNode).name !== chip && 
+      (link.target as GraphNode).name !== chip && 
+      !uniqueNodes.includes((link.source as GraphNode).name) && 
+      !uniqueNodes.includes((link.target as GraphNode).name)
+    );
+
+    updateGraph();
   }
 </script>
 
-<svg id="forceGraph" class="{currentMode}" />
-
-<style>
-  #forceGraph {
-    background-color: var(--graph-background-color, #f6f7fb);
-  }
-</style>
+<svg id="forceGraph">
+  <g></g>
+</svg>

@@ -1,117 +1,128 @@
-<script>
-  import { searchQuery, autoCompleteResults, fetchAutoCompleteResults } from '../stores.js';
-  import ClearButton from './ClearButton.svelte';
+<script lang="ts">
+	import { Autocomplete, InputChip } from '@skeletonlabs/skeleton';
+	import type { AutocompleteOption } from '@skeletonlabs/skeleton';
+	import {
+		searchQuery,
+		autoCompleteResults,
+		fetchAutoCompleteResults,
+		searchTerms,
+		chipToRemove
+	} from '../stores';
+	import { get } from 'svelte/store';
 
-  let flavor = '';
-  let selectedIndex = -1;
-  let searchInput;
+	let inputText = ''; // Bound search input text
+	let autoCompleteOptions: AutocompleteOption<string>[] = [];
+	let searchChips = get(searchTerms); // Initialize with current search terms
 
-  // Fetch autocomplete results when flavor changes
-  $: if (flavor) {
-    fetchAutoCompleteResults(flavor);
-  }
+	let previousResults: string[] = []; // Store previous results for comparison
 
-  function selectAutoCompleteResult(result) {
-    searchQuery.set(result);  // Update the searchQuery store
-    autoCompleteResults.set([]);  // Clear autocomplete results
-    flavor = '';  // Clear the search bar input
-  }
+	// Watch for changes in inputText and fetch autocomplete results
+	$: if (inputText.trim()) {
+		fetchAutoCompleteResults(inputText).then((newResults) => {
+			if (JSON.stringify(newResults) !== JSON.stringify(previousResults)) {
+				previousResults = [...newResults]; // Update the previous results
+				autoCompleteResults.set(newResults); // Update the store
+				autoCompleteOptions = newResults.map((result) => ({
+					label: result,
+					value: result
+				}));
+			}
+		});
+	}
 
-  function handleKeyUp(event) {
-    if (event.key === 'Enter') {
-      if (selectedIndex !== -1) {
-        selectAutoCompleteResult($autoCompleteResults[selectedIndex]);
-      } else {
-        searchQuery.set(flavor);  // Set the search query directly when Enter is pressed
-        autoCompleteResults.set([]);  // Clear autocomplete results after Enter key is pressed
-        flavor = '';  // Clear the search bar input
-      }
-    }
-  }
+	// Ensure autoCompleteOptions is cleared when inputText is empty
+	$: if (inputText === '') {
+		autoCompleteOptions = [];
+		autoCompleteResults.set([]); // Clear the autocomplete results store
+	}
 
-  function handleKeyDown(event) {
-    if (event.key === 'ArrowDown' && selectedIndex < $autoCompleteResults.length - 1) {
-      event.preventDefault();
-      selectedIndex++;
-    } else if (event.key === 'ArrowUp' && selectedIndex > 0) {
-      event.preventDefault();
-      selectedIndex--;
-    }
-  }
+	$: searchChips = $searchTerms; // Ensure searchChips reflects updates in searchTerms
+
+	function handleSelect(event: CustomEvent<AutocompleteOption<string>> | KeyboardEvent) {
+		let selectedValue: string | undefined;
+
+		if (event instanceof KeyboardEvent) {
+			selectedValue = inputText.trim();
+		} else if (event.detail && event.detail.value) {
+			selectedValue = event.detail.value;
+		}
+
+		if (selectedValue) {
+			if (!searchChips.includes(selectedValue)) {
+				searchChips = [...searchChips, selectedValue];
+				searchTerms.set(searchChips); // Update the searchTerms store
+			}
+			searchQuery.set(selectedValue); // Trigger search
+		}
+
+		// Clear input and autocomplete options after selection
+		inputText = '';
+		autoCompleteOptions = []; // Clear local autocomplete options
+		autoCompleteResults.set([]); // Clear the autocomplete results store
+
+		// Optionally blur the input to close any open dropdown
+		const inputElement = document.querySelector('input[name="search"]') as HTMLInputElement | null;
+		if (inputElement) {
+			inputElement.blur();
+		}
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault(); // Prevent form submission if inside a form
+			handleSelect(event);
+			// Clear autocomplete options explicitly
+			autoCompleteOptions = [];
+			autoCompleteResults.set([]);
+		}
+	}
+
+	function removeChip(event: CustomEvent<{ chipValue: string }>) {
+		const chip = event.detail.chipValue; // Extract the chip value from the event
+		searchChips = searchChips.filter((item) => item !== chip);
+		searchTerms.set(searchChips); // Update the searchTerms store
+
+		// Set the chipToRemove store to trigger graph updates
+		chipToRemove.set(chip);
+
+		// Clear the searchQuery if the removed chip was the last query
+		if (get(searchQuery) === chip) {
+			searchQuery.set(''); // Clear the searchQuery
+		}
+	}
+
+	function handleAdd(event: CustomEvent<{ chipValue: string }>) {
+		const chip = event.detail.chipValue;
+
+		if (!searchChips.includes(chip)) {
+			searchChips = [...searchChips, chip]; // Add chip to the list
+			searchTerms.set(searchChips); // Update the searchTerms store
+		}
+
+		searchQuery.set(chip); // Update searchQuery to trigger PowerView update
+	}
 </script>
 
-<div id="search-container">
-  <input
-    type="text"
-    bind:value={flavor}
-    placeholder="Enter flavor"
-    on:keyup={handleKeyUp}
-    on:keydown={handleKeyDown}
-    bind:this={searchInput}
-  />
-  <ClearButton />
-  {#if $autoCompleteResults.length}
-    <ul>
-      {#each $autoCompleteResults as result, index}
-        <li class:selected={index === selectedIndex}>
-          <button
-            class="autocomplete-button"
-            on:click={() => selectAutoCompleteResult(result)}
-            on:keyup={(event) =>
-              event.key === 'Enter' ? selectAutoCompleteResult(result) : null}
-          >
-            {result}
-          </button>
-        </li>
-      {/each}
-    </ul>
-  {/if}
+<div class="w-full max-w-sm">
+	<InputChip
+		bind:input={inputText}
+		bind:value={searchChips}
+		name="search"
+		placeholder="Search..."
+		on:keydown={handleKeydown}
+		on:remove={removeChip}
+		on:add={handleAdd}
+	/>
+
+	<!-- Conditionally render the Autocomplete component only if there are results -->
+	{#if autoCompleteOptions.length > 0}
+		<div class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto" tabindex="-1">
+			<Autocomplete
+				bind:input={inputText}
+				options={autoCompleteOptions}
+				denylist={searchChips}
+				on:selection={handleSelect}
+			/>
+		</div>
+	{/if}
 </div>
-
-<style>
-  #search-container {
-    position: relative;
-    margin-bottom: 20px;
-  }
-
-  input {
-    width: 100%;
-    max-width: 300px;
-    padding: 10px;
-    font-size: 1em;
-  }
-
-  ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    background: white;
-    border: 1px solid #ddd;
-    max-height: 200px;
-    overflow-y: auto;
-    position: absolute;
-    width: 100%;
-    max-width: 300px;
-    z-index: 1000;
-    top: 100%;
-    left: 0;
-  }
-
-  li {
-    padding: 8px 12px;
-    cursor: pointer;
-  }
-
-  li.selected {
-    background-color: #ddd;
-  }
-
-  .autocomplete-button {
-    background: none;
-    border: none;
-    padding: 8px 12px;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-  }
-</style>

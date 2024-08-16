@@ -1,199 +1,142 @@
-<script>
-  import { onMount } from 'svelte';
-  import { searchQuery, searchResultsMap, searchTerms } from '../stores.js';
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { derived } from 'svelte/store';
+	import { searchQuery, searchResultsMap, searchTerms } from '../stores.ts';
+	import ResultList from './ResultsList.svelte';
+	import type { Readable } from 'svelte/store';
 
-  let isLoading = false;
-  let hasResults = true;
-  let computedResults = [];
+	let isLoading = false;
+	let hasResults = false;
+	let hasSearched = false; // Track if a search has been performed
 
-  // Synchronize local state with global state on mount
-  onMount(() => {
-    const unsubscribeSearch = searchQuery.subscribe(async (flavor) => {
-      if (flavor && flavor.trim() !== '') {
-        await fetchRecommendations(flavor);
-      }
-    });
+	// Derive results from searchTerms and searchResultsMap
+	const results: Readable<Array<{ set: string[]; nodes: string[] }>> = derived(
+		[searchTerms, searchResultsMap],
+		([$searchTerms, $searchResultsMap]: [string[], Map<string, string[]>]) => {
+			return computeResults($searchTerms, $searchResultsMap);
+		}
+	);
 
-    const unsubscribeResultsMap = searchResultsMap.subscribe(map => {
-      if (map.size === 0) {
-        clearResults();
-      } else {
-        computeResults(); // Recompute results whenever the map is updated
-      }
-    });
+	onMount(() => {
+		const unsubscribeSearch = searchQuery.subscribe(async (flavor: string) => {
+			if (flavor && flavor.trim() !== '') {
+				await fetchRecommendations(flavor);
+			}
+		});
 
-    const unsubscribeSearchTerms = searchTerms.subscribe(terms => {
-      if (terms.length === 0) {
-        clearResults();
-      } else {
-        computeResults(); // Recompute results whenever the terms are updated
-      }
-    });
+		return () => {
+			unsubscribeSearch();
+		};
+	});
 
-    return () => {
-      unsubscribeSearch();
-      unsubscribeResultsMap();
-      unsubscribeSearchTerms();
-    };
-  });
+	async function fetchRecommendations(flavor: string) {
+		isLoading = true;
+		hasSearched = true; // Set to true when a search is initiated
+		try {
+			const response = await fetch(
+				`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${encodeURIComponent(flavor)}`
+			);
+			const data = await response.json();
 
-  async function fetchRecommendations(flavor) {
-    isLoading = true;
-    try {
-      const response = await fetch(`https://fdbackend-d0a756cc3435.herokuapp.com/recommendations?flavor=${encodeURIComponent(flavor)}`);
-      const data = await response.json();
+			if (data.recommendations && data.recommendations.length > 0) {
+				searchTerms.update((terms) => {
+					if (!terms.includes(flavor)) terms.push(flavor);
+					return terms;
+				});
 
-      if (data.recommendations && data.recommendations.length > 0) {
-        searchTerms.update(terms => {
-          if (!terms.includes(flavor)) terms.push(flavor);
-          return terms;
-        });
+				searchResultsMap.update((map) => {
+					const newResults = data.recommendations
+						.map((result: { name: string }) => result.name)
+						.sort();
+					map.set(flavor, newResults);
+					return map;
+				});
 
-        searchResultsMap.update(map => {
-          const existingResults = map.get(flavor) || [];
-          const newResults = data.recommendations.map(result => result.name).sort();
-          const mergedResults = [...new Set([...existingResults, ...newResults])];
-          map.set(flavor, mergedResults);
-          return map;
-        });
+				hasResults = true;
+			} else {
+				hasResults = false;
+			}
+		} catch (error) {
+			console.error('Error fetching data:', error);
+			hasResults = false;
+		} finally {
+			isLoading = false;
+		}
+	}
 
-        hasResults = true;
-      } else {
-        hasResults = false;
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      hasResults = false;
-    } finally {
-      isLoading = false;
-    }
-  }
+	function computeResults(
+		terms: string[],
+		resultsMap: Map<string, string[]>
+	): Array<{ set: string[]; nodes: string[] }> {
+		const results: Array<{ set: string[]; nodes: string[] }> = [];
 
-  function clearResults() {
-    hasResults = false;
-    isLoading = false;
-    computedResults = []; // Ensure computedResults is cleared
-  }
+		function getAllSubsets(arr: string[]): string[][] {
+			return arr
+				.reduce<
+					string[][]
+				>((subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])), [[]])
+				.filter((subset) => subset.length > 0);
+		}
 
-  function computeResults() {
-    computedResults = getCommonAndUniqueSets();
-  }
+		const subsets = getAllSubsets(terms);
 
-  function getCommonAndUniqueSets() {
-    const powerSet = [];
-    const terms = $searchTerms;
-    const resultsMap = $searchResultsMap;
-    const total = Math.pow(2, terms.length);
+		subsets.forEach((subset) => {
+			let commonNodes: Set<string> | null = null;
 
-    for (let i = 1; i < total; i++) {
-      const subset = [];
-      for (let j = 0; j < terms.length; j++) {
-        if (i & (1 << j)) {
-          subset.push(terms[j]);
-        }
-      }
-      powerSet.push(subset);
-    }
+			subset.forEach((term) => {
+				const nodes = new Set<string>(resultsMap.get(term) || []);
+				if (commonNodes === null) {
+					commonNodes = nodes;
+				} else {
+					commonNodes = new Set([...commonNodes].filter((node) => nodes.has(node)));
+				}
+			});
 
-    let results = [];
-    powerSet.sort((a, b) => b.length - a.length || a.join(', ').localeCompare(b.join(', ')));
+			// Type assertion to ensure commonNodes is treated as Set<string>
+			if (commonNodes && (commonNodes as Set<string>).size > 0) {
+				results.push({
+					set: [...subset].sort(),
+					nodes: Array.from(commonNodes) as string[] // Explicitly cast to string[]
+				});
+			}
+		});
 
-    powerSet.forEach(set => {
-      let commonNodes = null;
-      set.forEach(term => {
-        const nodes = new Set(resultsMap.get(term) || []);
-        if (commonNodes === null) {
-          commonNodes = nodes;
-        } else {
-          commonNodes = new Set([...commonNodes].filter(node => nodes.has(node)));
-        }
-      });
+		results.sort((a, b) => b.set.length - a.set.length);
 
-      const uniqueNodes = Array.from(commonNodes || []);
+		return results;
+	}
 
-      if (uniqueNodes.length > 0) {
-        results.push({
-          set,
-          nodes: uniqueNodes.sort()
-        });
-      }
-    });
+	function handleNodeClick(node: string) {
+		searchTerms.update((terms) => {
+			if (!terms.includes(node)) {
+				return [...terms, node];
+			}
+			return terms;
+		});
 
-    return results || [];
-  }
-
-  function handleItemClick(node) {
-    searchQuery.set(node); // Treat the clicked word as a new search query
-  }
+		// Trigger a search with the clicked node
+		searchQuery.set(node);
+	}
 </script>
 
-<div>
-  <div class="results-wrapper">
-    {#if isLoading}
-      <p>Loading...</p>
-    {:else if !hasResults}
-      <p>No results found.</p>
-    {:else}
-      {#if computedResults.length > 0}
-        {#each computedResults as {set, nodes} (set.join(', '))}
-          <div class="results-container">
-            <strong>{"{"}{set.join(', ')}{"}"}</strong>
-            <ul>
-              {#each nodes as node, i (node)}
-                <li>
-                  <button 
-                    on:click|preventDefault={() => handleItemClick(node)} 
-                    on:keydown|preventDefault={(e) => e.key === 'Enter' && handleItemClick(node)} 
-                    style="cursor: pointer; background: none; border: none; padding: 5px 0; text-align: left; width: 100%;"
-                  >
-                    {i < nodes.length - 1 ? '├── ' : '└── '}{node}
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          </div>
-        {/each}
-      {:else}
-        <p>No matching results found.</p>
-      {/if}
-    {/if}
-  </div>
+<div class="results-wrapper">
+	{#if isLoading}
+		<p>Loading...</p>
+	{:else if hasSearched && !hasResults}
+		<p>No results found.</p>
+	{:else if hasResults}
+		<!-- Unwrap the derived store using $results before passing it as a prop -->
+		<ResultList results={$results} onItemClick={handleNodeClick} />
+	{/if}
 </div>
+
 <style>
-  .results-wrapper {
-    padding: 20px;
-  }
+	.results-wrapper {
+		padding: 20px;
+	}
 
-  .results-container {
-    margin-bottom: 20px;
-  }
-
-  ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    font-family: monospace;
-  }
-  li {
-    padding: 0;
-  }
-  button {
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 5px 0;
-    text-align: left;
-    width: 100%;
-    font-family: inherit;
-    font-size: inherit;
-  }
-  strong {
-    font-size: 1.5em;
-    display: block;
-    margin-bottom: 10px;
-  }
-
-  .results-container ul {
-    margin-left: 20px;
-  }
+	p {
+		font-size: 1.2em;
+		text-align: center;
+	}
 </style>
