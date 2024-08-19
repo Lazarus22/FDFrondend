@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { derived } from 'svelte/store';
-	import { searchQuery, searchResultsMap, searchTerms } from '../stores.ts';
+	import { derived, get } from 'svelte/store';
+	import { activeTab, searchQuery, searchResultsMap, searchTerms, chipToRemove } from '../stores';
 	import ResultList from './ResultsList.svelte';
 	import type { Readable } from 'svelte/store';
 
@@ -18,16 +18,43 @@
 	);
 
 	onMount(() => {
-		const unsubscribeSearch = searchQuery.subscribe(async (flavor: string) => {
-			if (flavor && flavor.trim() !== '') {
+		// Initialize PowerView logic when the component is mounted
+		initializePowerView();
+		initializeFromGlobalState();
+
+		// Listen to the search query store
+		const unsubscribeSearch = searchQuery.subscribe(async (flavor) => {
+			if (flavor) {
 				await fetchRecommendations(flavor);
 			}
 		});
 
+		// Listen to the active tab and re-initialize when switching to the PowerView tab
+		const unsubscribeTab = activeTab.subscribe((tab) => {
+			if (tab === 1) { // Assuming 1 is the index for the PowerView (List) tab
+				initializePowerView(); // Re-initialize PowerView
+				initializeFromGlobalState(); // Re-fetch data if necessary
+			}
+		});
+
 		return () => {
+			// Unsubscribe from all subscriptions
 			unsubscribeSearch();
+			unsubscribeTab();
 		};
 	});
+
+	// Example functions to initialize PowerView and fetch data
+	function initializePowerView() {
+		// Any setup specific to PowerView goes here
+	}
+
+	async function initializeFromGlobalState() {
+		const terms = get(searchTerms); // Get search terms from store
+		for (const term of terms) {
+			await fetchRecommendations(term);
+		}
+	}
 
 	async function fetchRecommendations(flavor: string) {
 		isLoading = true;
@@ -72,9 +99,10 @@
 
 		function getAllSubsets(arr: string[]): string[][] {
 			return arr
-				.reduce<
-					string[][]
-				>((subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])), [[]])
+				.reduce<string[][]>(
+					(subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])),
+					[[]]
+				)
 				.filter((subset) => subset.length > 0);
 		}
 
@@ -116,6 +144,12 @@
 
 		// Trigger a search with the clicked node
 		searchQuery.set(node);
+	}
+
+	// Function to handle chip removal in PowerView
+	function handleRemoveChip(chip: string) {
+		searchTerms.update((terms) => terms.filter((term) => term !== chip));
+		chipToRemove.set(chip); // Trigger the chip removal in Graph
 	}
 </script>
 

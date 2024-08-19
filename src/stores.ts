@@ -1,4 +1,4 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable, type Writable, get } from 'svelte/store';
 import type { GraphNode, Link } from './types';
 
 // Existing stores
@@ -18,6 +18,32 @@ export const graphLinks = writable<Link[]>([]);
 
 // Store for managing the active tab state
 export const activeTab: Writable<number> = writable(0); // Default to the first tab
+
+// Function to add a chip (search term) to the searchTerms store
+export function addChip(chip: string) {
+	searchTerms.update((terms) => {
+		if (!terms.includes(chip)) {
+			terms.push(chip);
+		}
+		return terms;
+	});
+
+	searchQuery.set(chip);
+}
+
+// Function to remove a chip (search term) from the searchTerms store
+export function removeChip(chip: string) {
+	searchTerms.update((terms) => {
+		return terms.filter((term) => term !== chip);
+	});
+
+	chipToRemove.set(chip);
+
+	// Clear the searchQuery if the removed chip was the last query
+	if (get(searchQuery) === chip) {
+		searchQuery.set(''); // Clear the searchQuery
+	}
+}
 
 // Example fetch function for autocomplete results
 export async function fetchAutoCompleteResults(flavor: string): Promise<string[]> {

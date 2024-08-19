@@ -6,7 +6,8 @@
 		autoCompleteResults,
 		fetchAutoCompleteResults,
 		searchTerms,
-		chipToRemove
+		addChip,         // Importing the addChip function
+		removeChip       // Importing the removeChip function
 	} from '../stores';
 	import { get } from 'svelte/store';
 
@@ -38,68 +39,39 @@
 
 	$: searchChips = $searchTerms; // Ensure searchChips reflects updates in searchTerms
 
-	function handleSelect(event: CustomEvent<AutocompleteOption<string>> | KeyboardEvent) {
-		let selectedValue: string | undefined;
-
-		if (event instanceof KeyboardEvent) {
-			selectedValue = inputText.trim();
-		} else if (event.detail && event.detail.value) {
-			selectedValue = event.detail.value;
-		}
-
+	// Function to handle selection from the Autocomplete component
+	function handleAutocompleteSelect(event: CustomEvent<AutocompleteOption<string>>) {
+		const selectedValue = event.detail.value;
 		if (selectedValue) {
-			if (!searchChips.includes(selectedValue)) {
-				searchChips = [...searchChips, selectedValue];
-				searchTerms.set(searchChips); // Update the searchTerms store
-			}
-			searchQuery.set(selectedValue); // Trigger search
+			addChip(selectedValue); // Use the addChip function
+			inputText = ''; // Clear the search bar
+			autoCompleteOptions = []; // Clear autocomplete options
+			autoCompleteResults.set([]); // Clear the autocomplete results store
 		}
+	}
 
-		// Clear input and autocomplete options after selection
-		inputText = '';
-		autoCompleteOptions = []; // Clear local autocomplete options
-		autoCompleteResults.set([]); // Clear the autocomplete results store
-
-		// Optionally blur the input to close any open dropdown
-		const inputElement = document.querySelector('input[name="search"]') as HTMLInputElement | null;
-		if (inputElement) {
-			inputElement.blur();
+	// Function to handle addition of chips directly via the InputChip component
+	function handleChipAdd(event: CustomEvent<{ chipValue: string }>) {
+		const chip = event.detail.chipValue;
+		if (chip) {
+			addChip(chip); // Use the addChip function
 		}
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
 			event.preventDefault(); // Prevent form submission if inside a form
-			handleSelect(event);
+			handleChipAdd(new CustomEvent('add', { detail: { chipValue: inputText.trim() } }));
 			// Clear autocomplete options explicitly
+			inputText = ''; // Clear the search bar
 			autoCompleteOptions = [];
 			autoCompleteResults.set([]);
 		}
 	}
 
-	function removeChip(event: CustomEvent<{ chipValue: string }>) {
-		const chip = event.detail.chipValue; // Extract the chip value from the event
-		searchChips = searchChips.filter((item) => item !== chip);
-		searchTerms.set(searchChips); // Update the searchTerms store
-
-		// Set the chipToRemove store to trigger graph updates
-		chipToRemove.set(chip);
-
-		// Clear the searchQuery if the removed chip was the last query
-		if (get(searchQuery) === chip) {
-			searchQuery.set(''); // Clear the searchQuery
-		}
-	}
-
-	function handleAdd(event: CustomEvent<{ chipValue: string }>) {
+	function handleRemove(event: CustomEvent<{ chipValue: string }>) {
 		const chip = event.detail.chipValue;
-
-		if (!searchChips.includes(chip)) {
-			searchChips = [...searchChips, chip]; // Add chip to the list
-			searchTerms.set(searchChips); // Update the searchTerms store
-		}
-
-		searchQuery.set(chip); // Update searchQuery to trigger PowerView update
+		removeChip(chip); // Use the removeChip function
 	}
 </script>
 
@@ -110,8 +82,8 @@
 		name="search"
 		placeholder="Search..."
 		on:keydown={handleKeydown}
-		on:remove={removeChip}
-		on:add={handleAdd}
+		on:remove={handleRemove}
+		on:add={handleChipAdd}  
 	/>
 
 	<!-- Conditionally render the Autocomplete component only if there are results -->
@@ -121,7 +93,7 @@
 				bind:input={inputText}
 				options={autoCompleteOptions}
 				denylist={searchChips}
-				on:selection={handleSelect}
+				on:selection={handleAutocompleteSelect} 
 			/>
 		</div>
 	{/if}

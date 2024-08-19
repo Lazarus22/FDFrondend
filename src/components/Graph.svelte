@@ -3,7 +3,14 @@
 	import * as d3 from 'd3';
 	import type { GraphNode, Link } from '../types';
 	import { get } from 'svelte/store';
-	import { searchQuery, searchTerms, chipToRemove, graphNodes, graphLinks } from '../stores';
+	import {
+		activeTab,
+		searchQuery,
+		searchTerms,
+		chipToRemove,
+		graphNodes,
+		graphLinks
+	} from '../stores';
 
 	let nodes: GraphNode[] = [];
 	let links: Link[] = [];
@@ -33,15 +40,18 @@
 	};
 
 	onMount(() => {
+		// Initialize the graph and global state on mount
 		initializeGraph();
 		initializeFromGlobalState();
 
+		// Listen to the search query store
 		const unsubscribeSearch = searchQuery.subscribe(async (flavor) => {
 			if (flavor) {
 				await fetchDataAndUpdate(flavor);
 			}
 		});
 
+		// Listen to the chip removal store
 		const unsubscribeChipRemove = chipToRemove.subscribe((chip) => {
 			if (chip) {
 				removeChip({ detail: { chipValue: chip } });
@@ -49,9 +59,20 @@
 			}
 		});
 
+		// Listen to the active tab and re-initialize when switching to the graph tab
+		const unsubscribeTab = activeTab.subscribe((tab) => {
+			if (tab === 0) {
+				// Assuming 0 is the index for the Graph tab
+				initializeGraph(); // Re-initialize the graph
+				recalculateGraphFromState(); // Re-fetch data based on the current state
+			}
+		});
+
 		return () => {
+			// Unsubscribe from all subscriptions
 			unsubscribeSearch();
 			unsubscribeChipRemove();
+			unsubscribeTab();
 		};
 	});
 
@@ -60,6 +81,13 @@
 		for (const term of terms) {
 			await fetchDataAndUpdate(term);
 		}
+	}
+
+	async function recalculateGraphFromState() {
+		nodes = [];
+		links = [];
+		await initializeFromGlobalState(); // Re-fetch and re-calculate the graph
+		updateGraph(); // Redraw the graph with the updated nodes and links
 	}
 
 	async function fetchDataAndUpdate(flavor: string) {
@@ -134,6 +162,39 @@
 		});
 	}
 
+	const hexagonPath = d3
+		.line()
+		.x((d) => d[0])
+		.y((d) => d[1])
+		.curve(d3.curveLinear);
+
+	const hexagonPoints: [number, number][] = [
+		[0, -5],
+		[4.33, -2.5],
+		[4.33, 2.5],
+		[0, 5],
+		[-4.33, 2.5],
+		[-4.33, -2.5],
+		[0, -5]
+	];
+
+	function dragStarted(event: any, d: GraphNode) {
+		if (!event.active && simulation) simulation.alphaTarget(0.3).restart();
+		d.fx = d.x;
+		d.fy = d.y;
+	}
+
+	function dragged(event: any, d: GraphNode) {
+		d.fx = event.x;
+		d.fy = event.y;
+	}
+
+	function dragEnded(event: any, d: GraphNode) {
+		if (!event.active && simulation) simulation.alphaTarget(0);
+		d.fx = null;
+		d.fy = null;
+	}
+
 	function updateGraph() {
 		// Persist nodes and links to the store
 		graphNodes.set(nodes);
@@ -145,24 +206,35 @@
 			.attr('height', window.innerHeight);
 		const zoomGroup = svg.select<SVGGElement>('g');
 
+		// Draw the lines (links) first
 		zoomGroup
 			.selectAll<SVGLineElement, Link>('line')
 			.data(links, (d: any) => `${(d.source as GraphNode).name}-${(d.target as GraphNode).name}`)
 			.join('line')
 			.attr('class', 'link')
-			.attr('stroke-width', 1) // Keep the stroke width consistent
-			.attr('stroke', (d) => edgeColorMap[d.strength] || '#ccc'); // Apply color based on strength
+			.attr('stroke-width', 1)
+			.attr('stroke', (d) => edgeColorMap[d.strength] || '#ccc');
 
-		const nodeGroup = zoomGroup
+		// Draw the nodes and text labels after the lines (links)
+		zoomGroup
 			.selectAll<SVGGElement, GraphNode>('g.node')
 			.data(nodes, (d: any) => d.name)
 			.join(
 				(enter) => {
-					const g = enter.append('g').attr('class', 'node');
+					const g = enter
+						.append('g')
+						.attr('class', 'node')
+						.call(
+							d3
+								.drag<SVGGElement, GraphNode>()
+								.on('start', dragStarted)
+								.on('drag', dragged)
+								.on('end', dragEnded)
+						);
 
-					g.append('circle')
-						.attr('r', 5)
-						.attr('fill', (d) => colorMap[d.nodeType as keyof typeof colorMap] || '#fee07e'); // Apply color based on nodeType
+					g.append('path')
+						.attr('d', hexagonPath(hexagonPoints)!)
+						.attr('fill', (d) => colorMap[d.nodeType as keyof typeof colorMap] || '#fee07e');
 
 					g.append('text')
 						.text((d) => d.name)
@@ -177,6 +249,9 @@
 				(update) => update,
 				(exit) => exit.remove()
 			);
+
+		// Reorder to ensure nodes and labels are on top
+		zoomGroup.selectAll('g.node').raise();
 
 		svg.call(
 			d3
