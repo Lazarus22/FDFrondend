@@ -19,7 +19,6 @@ export const graphLinks = writable<Link[]>([]);
 // Store for managing the active tab state
 export const activeTab: Writable<number> = writable(0); // Default to the first tab
 
-
 // Example fetch function for autocomplete results
 export async function fetchAutoCompleteResults(flavor: string): Promise<string[]> {
 	if (flavor.length < 2) {
