@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
+	import { modeCurrent } from '@skeletonlabs/skeleton';
 	import type { GraphNode, Link } from '../types';
 	import { get } from 'svelte/store';
 	import {
@@ -20,56 +21,37 @@
 	graphNodes.subscribe((value) => (nodes = value));
 	graphLinks.subscribe((value) => (links = value));
 
-	// Define the color map based on nodeType and edge strength
-	const colorMap: { [key: string]: string } = {
-		Ingredient: '#fee07e',
-		Taste: '#ecb5ca',
-		Volume: '#f16767',
-		Weight: '#ca90c0',
-		Season: '#8cce91',
-		Function: '#f79767',
-		Technique: '#58c7e3',
-		Related: '#d9c8ae'
-	};
-
-	const edgeColorMap: { [key: number]: string } = {
-		1: '#ccc', // Light gray
-		2: '#999', // Medium gray
-		3: '#666', // Darker gray
-		4: '#000' // Black
-	};
-
 	onMount(() => {
-		// Initialize the graph and global state on mount
 		initializeGraph();
 		initializeFromGlobalState();
 
-		// Listen to the search query store
+		// Subscribe to modeCurrent to update the graph when the mode changes
+		const unsubscribeMode = modeCurrent.subscribe((isDarkMode) => {
+			updateGraph(); // Re-render the graph with the current mode's colors
+		});
+
 		const unsubscribeSearch = searchQuery.subscribe(async (flavor) => {
 			if (flavor) {
 				await fetchDataAndUpdate(flavor);
 			}
 		});
 
-		// Listen to the chip removal store
 		const unsubscribeChipRemove = chipToRemove.subscribe((chip) => {
 			if (chip) {
 				removeChip({ detail: { chipValue: chip } });
-				chipToRemove.set(null); // Clear the store after handling
+				chipToRemove.set(null);
 			}
 		});
 
-		// Listen to the active tab and re-initialize when switching to the graph tab
 		const unsubscribeTab = activeTab.subscribe((tab) => {
 			if (tab === 0) {
-				// Assuming 0 is the index for the Graph tab
-				initializeGraph(); // Re-initialize the graph
-				recalculateGraphFromState(); // Re-fetch data based on the current state
+				initializeGraph();
+				recalculateGraphFromState();
 			}
 		});
 
 		return () => {
-			// Unsubscribe from all subscriptions
+			unsubscribeMode(); // Ensure cleanup of the subscription
 			unsubscribeSearch();
 			unsubscribeChipRemove();
 			unsubscribeTab();
@@ -162,6 +144,46 @@
 		});
 	}
 
+	const lightModeColors = {
+		node: {
+			Ingredient: '#fee07e', // Light yellow
+			Taste: '#ecb5ca', // Light pink
+			Volume: '#f16767', // Light red
+			Weight: '#ca90c0', // Light purple
+			Season: '#8cce91', // Light green
+			Function: '#f79767', // Light orange
+			Technique: '#58c7e3', // Light blue
+			Related: '#d9c8ae' // Light beige
+		},
+		edge: {
+			1: '#ccc', // Light gray
+			2: '#999', // Medium gray
+			3: '#666', // Dark gray
+			4: '#fff' // Black
+		},
+		text: '#fff' // Black text
+	};
+
+	const darkModeColors = {
+		node: {
+			Ingredient: '#ffd700', // Bright yellow
+			Taste: '#ff69b4', // Hot pink
+			Volume: '#ff4500', // Orange-red
+			Weight: '#b565a7', // Deep purple
+			Season: '#6b8e23', // Olive green
+			Function: '#ffa500', // Bright orange
+			Technique: '#1e90ff', // Dodger blue
+			Related: '#cd853f' // Peru brown
+		},
+		edge: {
+			1: '#666', // Dark gray
+			2: '#444', // Darker gray
+			3: '#222', // Near black
+			4: '#000' // White
+		},
+		text: '#000' // White text
+	};
+
 	const hexagonPath = d3
 		.line()
 		.x((d) => d[0])
@@ -196,15 +218,21 @@
 	}
 
 	function updateGraph() {
-		// Persist nodes and links to the store
-		graphNodes.set(nodes);
-		graphLinks.set(links);
+		const isDarkMode = get(modeCurrent); // Get the current mode
+
+		const currentEdgeColorMap = isDarkMode ? darkModeColors.edge : lightModeColors.edge;
+		const currentNodeColorMap = isDarkMode ? darkModeColors.node : lightModeColors.node;
+		const currentTextColor = isDarkMode ? darkModeColors.text : lightModeColors.text;
 
 		const svg = d3
 			.select<SVGSVGElement, unknown>('#forceGraph')
 			.attr('width', window.innerWidth)
 			.attr('height', window.innerHeight);
+
 		const zoomGroup = svg.select<SVGGElement>('g');
+
+		// Clear existing elements to force redraw with new colors
+		zoomGroup.selectAll('*').remove();
 
 		// Draw the lines (links) first
 		zoomGroup
@@ -212,8 +240,11 @@
 			.data(links, (d: any) => `${(d.source as GraphNode).name}-${(d.target as GraphNode).name}`)
 			.join('line')
 			.attr('class', 'link')
-			.attr('stroke-width', 1)
-			.attr('stroke', (d) => edgeColorMap[d.strength] || '#ccc');
+			.attr('stroke-width', .3)
+			.attr(
+				'stroke',
+				(d) => currentEdgeColorMap[d.strength as keyof typeof currentEdgeColorMap] || '#ccc'
+			);
 
 		// Draw the nodes and text labels after the lines (links)
 		zoomGroup
@@ -234,7 +265,11 @@
 
 					g.append('path')
 						.attr('d', hexagonPath(hexagonPoints)!)
-						.attr('fill', (d) => colorMap[d.nodeType as keyof typeof colorMap] || '#fee07e');
+						.attr(
+							'fill',
+							(d) =>
+								currentNodeColorMap[d.nodeType as keyof typeof currentNodeColorMap] || '#fee07e'
+						);
 
 					g.append('text')
 						.text((d) => d.name)
@@ -242,6 +277,7 @@
 						.attr('y', 3)
 						.attr('font-size', '12px')
 						.attr('font-family', 'Arial, Helvetica, sans-serif')
+						.attr('fill', currentTextColor)
 						.attr('pointer-events', 'none');
 
 					return g;
@@ -250,7 +286,6 @@
 				(exit) => exit.remove()
 			);
 
-		// Reorder to ensure nodes and labels are on top
 		zoomGroup.selectAll('g.node').raise();
 
 		svg.call(
