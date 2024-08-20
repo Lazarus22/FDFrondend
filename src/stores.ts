@@ -6,7 +6,6 @@ export const searchQuery = writable<string>('');
 export const searchResultsMap = writable<Map<string, string[]>>(new Map());
 export const searchTerms = writable<string[]>([]);
 export const autoCompleteResults = writable<string[]>([]);
-export const isDarkMode = writable<boolean>(false);
 export const mode = writable<string>('graph');
 
 // New store for chip removal
