@@ -20,32 +20,38 @@
 <!-- Include the Analytics component -->
 <Analytics />
 
-<div class="container mx-auto mt-5 h-screen overflow-y-auto">
-	<SearchBar />
-
-	{#if splitPaneEnabled}
-		<SplitPane leftInitialSize="75%">
-			<div slot="left">
-				<Graph />
+<div class="w-full h-screen overflow-hidden">
+	<div class="p-4 flex flex-col sm:flex-row sm:justify-between items-center space-y-4 sm:space-y-0">
+		<div class="flex-1">
+			<SearchBar />
+		</div>
+		{#if !splitPaneEnabled}
+			<div class="flex-1 flex justify-center">
+				<TabGroup>
+					<Tab bind:group={tabSet} name="graph" value={0}>Graph</Tab>
+					<Tab bind:group={tabSet} name="list" value={1}>List</Tab>
+				</TabGroup>
 			</div>
-			<div slot="right">
-				<PowerView />
-			</div>
-		</SplitPane>
-	{:else}
-		<TabGroup>
-			<Tab bind:group={tabSet} name="graph" value={0}>Graph</Tab>
-			<Tab bind:group={tabSet} name="list" value={1}>List</Tab>
+		{/if}
+		<div class="flex-1"></div> <!-- Empty space to balance the layout -->
+	</div>
 
-			<svelte:fragment slot="panel">
-				{#if tabSet === 0}
+	<div class="h-full">
+		{#if splitPaneEnabled}
+			<SplitPane leftInitialSize="75%">
+				<div slot="left">
 					<Graph />
-				{:else if tabSet === 1}
+				</div>
+				<div slot="right">
 					<PowerView />
-				{/if}
-			</svelte:fragment>
-		</TabGroup>
-	{/if}
-
-	<slot />
+				</div>
+			</SplitPane>
+		{:else}
+			{#if tabSet === 0}
+				<Graph />
+			{:else if tabSet === 1}
+				<PowerView />
+			{/if}
+		{/if}
+	</div>
 </div>
