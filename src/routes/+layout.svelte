@@ -42,7 +42,7 @@
 				<div slot="left">
 					<Graph />
 				</div>
-				<div slot="right">
+				<div slot="right" class="overflow-y-auto">
 					<PowerView />
 				</div>
 			</SplitPane>
@@ -50,7 +50,9 @@
 			{#if tabSet === 0}
 				<Graph />
 			{:else if tabSet === 1}
-				<PowerView />
+				<div class="overflow-y-auto h-full"> <!-- Added scroll handling -->
+					<PowerView />
+				</div>
 			{/if}
 		{/if}
 	</div>
