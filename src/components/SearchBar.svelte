@@ -14,11 +14,11 @@
   let previousResults: string[] = [];
   let showPopup = false;
   let popupElement: HTMLElement | null = null;
-  let containerElement: HTMLElement | null = null; // Target the entire container now
+  let containerElement: HTMLElement | null = null;
 
   let popupSettings: PopupSettings = {
     event: 'focus-click',
-    target: '.input-chip-container', // Target the entire container
+    target: '.input-chip-container',
     placement: 'bottom-start',
     middleware: {
       offset: ({ rects, placement }: { rects: { reference: DOMRect; floating: DOMRect }, placement: Placement }) => {
@@ -32,14 +32,10 @@
     }
   };
 
-  console.log('Popup settings initialized:', popupSettings);
-
   onMount(async () => {
-    console.log('SearchBar component mounted');
     await tick();  // Wait for the DOM to update
 
     containerElement = document.querySelector('.input-chip-container'); // Update to target container
-    console.log('Container element found:', containerElement);
 
     window.addEventListener('resize', updatePopupPosition);
     window.addEventListener('scroll', updatePopupPosition, true);
@@ -49,7 +45,6 @@
     if (showPopup) {
       await tick();  // Wait for DOM to update with the popup element
       popupElement = document.querySelector('[data-popup="popupAutocomplete"]');
-      console.log('Popup element found:', popupElement ? popupElement : 'Popup element not found. Check the selector.');
       updatePopupPosition();  // Recompute position when popup is shown
     }
   }
@@ -70,37 +65,26 @@
           visibility: 'visible',
           position: 'absolute',
         });
-        console.log(`Popup positioned at x: ${x}px, y: ${y}px`);
       }).catch(err => console.error('Error computing popup position:', err));
-    } else {
-      console.log('Cannot compute popup position: Container element or popup element not found.');
     }
   }
 
   // Fetch autocomplete results
   $: if (inputText.trim()) {
-    console.log('Fetching autocomplete results for:', inputText);
     fetchAutoCompleteResults(inputText).then((newResults) => {
-      console.log('Fetched results:', newResults);
       if (JSON.stringify(newResults) !== JSON.stringify(previousResults)) {
-        console.log('New autocomplete results:', newResults);
         previousResults = [...newResults];
         autoCompleteResults.set(newResults);
         autoCompleteOptions = newResults.map(result => ({ label: result, value: result }));
-        console.log('Rendering autocomplete options:', autoCompleteOptions);
         showPopup = autoCompleteOptions.length > 0;
-        console.log('Show popup set to:', showPopup);
         logPopupState();
         handlePopupVisibilityChange();  // Explicitly handle popup visibility
-      } else {
-        console.log('No change in autocomplete results');
       }
     }).catch(error => console.error('Error fetching autocomplete results:', error));
   }
 
   // Clear autocomplete options if inputText is empty
   $: if (inputText === '') {
-    console.log('Input text is empty. Clearing autocomplete options.');
     autoCompleteOptions = [];
     autoCompleteResults.set([]);
     showPopup = false;
@@ -111,7 +95,6 @@
 
   function handleAutocompleteSelect(event: CustomEvent<AutocompleteOption<string>>) {
     const selectedValue = event.detail.value;
-    console.log('Selected autocomplete option:', selectedValue);
     if (selectedValue) {
       addChip(selectedValue);
       inputText = '';  // Clear input text
@@ -125,7 +108,6 @@
 
   function handleChipAdd(event: CustomEvent<{ chipValue: string }>) {
     const chip = event.detail.chipValue;
-    console.log('Added chip:', chip);
     if (chip) {
       addChip(chip);
       dispatch('search');
@@ -135,7 +117,6 @@
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       event.preventDefault();
-      console.log('Enter key pressed with input:', inputText.trim());
       handleChipAdd(new CustomEvent('add', { detail: { chipValue: inputText.trim() } }));
       inputText = '';
       autoCompleteOptions = [];
@@ -147,22 +128,18 @@
 
   function handleRemove(event: CustomEvent<{ chipValue: string }>) {
     const chip = event.detail.chipValue;
-    console.log('Removed chip:', chip);
     removeChip(chip);
   }
 
   function logPopupState() {
-    console.log('Popup visibility state updated. showPopup:', showPopup);
     if (showPopup && popupElement) {
       popupElement.style.display = 'block';
       popupElement.style.zIndex = '1000';
       popupElement.style.visibility = 'visible';
       popupElement.style.maxHeight = '200px';
       popupElement.style.overflowY = 'auto';
-      console.log('Popup element styles set to visible, z-index adjusted, max height and overflow configured');
     } else if (popupElement) {
       popupElement.style.display = 'none';
-      console.log('Popup is hidden because showPopup is false.');
     }
   }
 </script>
@@ -186,13 +163,10 @@
       class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
       tabindex="0"
       role="button"
-      on:click={() => {
-        console.log('Popup clicked');
-      }}
+      on:click={() => {}}
       on:keydown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          console.log('Popup triggered via keyboard');
         }
       }}
     >
