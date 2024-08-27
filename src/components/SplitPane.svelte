@@ -1,21 +1,21 @@
 <script lang="ts">
 	export let leftInitialSize = '75%';
 
-	let left;
+	let left: HTMLDivElement | null = null;
 	let isDragging = false;
 
-	function dragstart(event) {
+	function dragstart(event: MouseEvent) {
 		event.preventDefault();
 		isDragging = true;
 		document.addEventListener('mousemove', drag);
 		document.addEventListener('mouseup', dragend);
 	}
 
-	function drag(event) {
-		if (!isDragging) return;
+	function drag(event: MouseEvent) {
+		if (!isDragging || !left) return;
 
-		const containerWidth = left.parentElement.offsetWidth;
-		const newLeftWidth = (event.clientX - left.parentElement.getBoundingClientRect().left) / containerWidth * 100;
+		const containerWidth = left.parentElement?.offsetWidth || 0;
+		const newLeftWidth = (event.clientX - (left.parentElement?.getBoundingClientRect().left || 0)) / containerWidth * 100;
 
 		// Ensure the panes don't collapse
 		if (newLeftWidth < 10) {
@@ -52,7 +52,7 @@
 	.split-pane {
 		display: flex;
 		width: 100%;
-		height: 100vh; /* Ensure it takes the full height */
+		height: 100vh; 
 	}
 
 	.left-pane {

@@ -33,7 +33,7 @@
   };
 
   onMount(async () => {
-    await tick();  // Wait for the DOM to update
+    await tick();  
 
     containerElement = document.querySelector('.input-chip-container'); // Update to target container
 
