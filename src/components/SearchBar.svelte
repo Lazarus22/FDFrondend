@@ -155,7 +155,6 @@
     on:add={handleChipAdd}
   />
 
-  <!-- Popup Trigger Element -->
   {#if showPopup}
     <div
       use:popup={popupSettings}
@@ -181,7 +180,6 @@
 </div>
 
 <style>
-  /* Override any padding or margin that might affect the popup's positioning */
   [data-popup="popupAutocomplete"] {
     position: absolute !important;
     margin: 0 !important;
