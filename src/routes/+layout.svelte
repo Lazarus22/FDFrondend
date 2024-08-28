@@ -1,7 +1,8 @@
 <script lang="ts">
-	import '../app.postcss'; 
+	import '../app.postcss';
+	import { onMount } from 'svelte';
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
-	import { storePopup } from '@skeletonlabs/skeleton';
+	import { storePopup, setModeUserPrefers, modeUserPrefers, setModeCurrent, modeCurrent } from '@skeletonlabs/skeleton';
 	import { LightSwitch, SlideToggle, TabGroup, Tab } from '@skeletonlabs/skeleton';
 	import Graph from '../components/Graph.svelte';
 	import PowerView from '../components/PowerView.svelte';
@@ -10,14 +11,50 @@
 	import Analytics from '../components/Analytics.svelte';
 	import SplashGraph from '../components/SplashGraph.svelte';
 
-	let tabSet: number = 0; 
+	let tabSet: number = 0;
 	let splitPaneEnabled = false;
 	let hasSearched = false;
 
 	// Set up Floating UI for popup functionality
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
-	// This function will be called when the search is performed
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			const storedPref = localStorage.getItem('userPrefersDark');
+			if (storedPref !== null) {
+				const userPrefersDark = storedPref === 'true';
+
+				// Apply the user preference
+				setModeUserPrefers(userPrefersDark);
+				setModeCurrent(userPrefersDark);
+			} else {
+				// Match the OS preference by default
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+				setModeUserPrefers(prefersDark);
+				setModeCurrent(prefersDark);
+				localStorage.setItem('userPrefersDark', prefersDark.toString());
+			}
+		}
+	});
+
+	// Watch for changes in modeUserPrefers and update localStorage
+	$: {
+		if (typeof window !== 'undefined' && $modeUserPrefers !== undefined) {
+			localStorage.setItem('userPrefersDark', $modeUserPrefers.toString());
+		}
+	}
+
+	// Watch for changes in modeCurrent to detect when the user changes preferences
+	$: {
+		if (typeof window !== 'undefined' && $modeCurrent !== undefined && $modeUserPrefers !== undefined) {
+			if ($modeCurrent !== $modeUserPrefers) {
+				setModeUserPrefers($modeCurrent);
+				localStorage.setItem('userPrefersDark', $modeCurrent.toString());
+			}
+		}
+	}
+
 	function onSearch() {
 		hasSearched = true;
 	}
@@ -27,7 +64,7 @@
 	<!-- Splash Page with Search Bar at Google-like height -->
 	<div class="relative w-full h-screen flex items-center justify-center">
 		<SplashGraph /> <!-- Background graph component -->
-		<div class="absolute inset-0 flex flex-col items-center" style="top: 33%;"> <!-- Adjust top to position search bar one-third down the screen -->
+		<div class="absolute inset-0 flex flex-col items-center" style="top: 33%;">
 			<h1 class="text-5xl font-bold mb-8">Flavor Database</h1> <!-- Large text above the search bar -->
 			<SearchBar on:search={onSearch} />
 		</div>
@@ -35,7 +72,7 @@
 {:else}
 	<!-- Main Page Content -->
 	<div class="fixed top-5 right-5 z-50 flex flex-col items-end space-y-4">
-		<LightSwitch />
+		<LightSwitch /> <!-- The LightSwitch component now works with reactive stores -->
 		<SlideToggle bind:checked={splitPaneEnabled} name="splitPaneToggle" id="splitPaneToggle" size="sm" />
 	</div>
 

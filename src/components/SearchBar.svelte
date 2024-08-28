@@ -16,6 +16,7 @@
   let popupElement: HTMLElement | null = null;
   let containerElement: HTMLElement | null = null;
 
+
   let popupSettings: PopupSettings = {
     event: 'focus-click',
     target: '.input-chip-container',
