@@ -98,25 +98,37 @@
 
 		const zoomGroup = svg.append('g');
 
+		// Introduce a gentler wind-like force by reducing the strength
+		function windForce() {
+			const windStrength = 0.0005; // Smaller value for more subtle movement
+			const windDirectionX = 0.05;  // Lower horizontal wind effect
+			const windDirectionY = 0.025; // Lower vertical wind effect
+
+			nodes.forEach((node) => {
+				node.vx = (node.vx ?? 0) + windStrength * windDirectionX;
+				node.vy = (node.vy ?? 0) + windStrength * windDirectionY;
+			});
+		}
+
 		simulation = d3
 			.forceSimulation<Node, Link>(nodes)
 			.force('link', d3.forceLink<Node, Link>(links)
 				.id((d: Node | string) => (typeof d === 'string' ? d : d.id))
-				.distance(clusterRadius)
+				.distance(clusterRadius)  // Set a fixed distance
+				.strength(1)  // Make link force strong enough to maintain the distance
 			)
-			.force('charge', d3.forceManyBody().strength(-30).distanceMax(300))
-			.force('center', d3.forceCenter(0, 0)) // Center force at (0, 0) to fit the world
+			.force('charge', d3.forceManyBody().strength(-5).distanceMax(500))  // Even less aggressive repulsion
+			.force('center', d3.forceCenter(0, 0))  // Center force at (0, 0)
 			.force('collision', d3.forceCollide<Node>()
-				.radius((node) => {
-					const numConnections = links.filter(link => (typeof link.source !== 'string' && (link.source as Node).id === node.id) || (typeof link.target !== 'string' && (link.target as Node).id === node.id)).length;
-					return 60 + numConnections * 5;
-				})
-				.strength(0.3)
+				.radius(clusterRadius + 20)  // Set collision radius slightly larger than cluster radius
+				.strength(0.05)  // Lower strength for gentler collisions
 			)
-			.force('cluster-repulsion', clusterRepulsionForce())
-			.force('x', d3.forceX().strength(0.0002))
-			.force('y', d3.forceY().strength(0.0002))
-			.alphaDecay(0)
+			.force('x', d3.forceX().strength(0.00005))
+			.force('y', d3.forceY().strength(0.00005))
+			.force('wind', windForce)  // Apply the gentler wind-like force
+			.alpha(0.2)
+			.alphaDecay(0.005)  // Slower decay for gentle continuous movement
+			.alphaTarget(0.02)  // Lower target alpha for subtler movement
 			.on('tick', ticked);
 
 		const link = zoomGroup
@@ -133,15 +145,6 @@
 				.attr('y1', (d) => (typeof d.source !== 'string' ? (d.source as Node).y : nodes.find(n => n.id === d.source)?.y ?? 0))
 				.attr('x2', (d) => (typeof d.target !== 'string' ? (d.target as Node).x : nodes.find(n => n.id === d.target)?.x ?? 0))
 				.attr('y2', (d) => (typeof d.target !== 'string' ? (d.target as Node).y : nodes.find(n => n.id === d.target)?.y ?? 0));
-
-			nodes.forEach((node) => {
-				node.vx = (node.vx ?? 0) * 0.9;
-				node.vy = (node.vy ?? 0) * 0.9;
-			});
-
-			if (simulation.alpha() < 0.03) {
-				simulation.alpha(0.03).restart();
-			}
 		}
 
 		svg.call(
@@ -163,35 +166,6 @@
 					.transform,
 				initialTransform
 			);
-	}
-
-	function clusterRepulsionForce() {
-		const clusterForce = d3.forceManyBody<Node>()
-			.strength(-30)
-			.distanceMin(150)
-			.distanceMax(300);
-
-		return () => {
-			nodes.forEach((node, index) => {
-				const otherClusterNodes = nodes.filter(n => n.cluster !== node.cluster);
-				otherClusterNodes.forEach((otherNode) => {
-					const dx = (node.x ?? 0) - (otherNode.x ?? 0);
-					const dy = (node.y ?? 0) - (otherNode.y ?? 0);
-					const distance = Math.sqrt((dx || 0) ** 2 + (dy || 0) ** 2);
-
-					const forceStrength = clusterForce.strength();
-					const strengthValue = typeof forceStrength === 'function'
-							? forceStrength(node, index, nodes)
-							: forceStrength;
-
-					const strength = strengthValue / distance;
-					if (distance < clusterForce.distanceMax()! && distance > clusterForce.distanceMin()!) {
-						node.vx = (node.vx ?? 0) + (dx / distance) * strength;
-						node.vy = (node.vy ?? 0) + (dy / distance) * strength;
-					}
-				});
-			});
-		};
 	}
 </script>
 
