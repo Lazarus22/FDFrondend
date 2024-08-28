@@ -2,17 +2,15 @@
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
 
-	// Extend the Node type definition
 	interface Node {
 		id: string;
 		cluster: number;
 		x: number;
 		y: number;
-		vx?: number;  // Optional vx property for velocity in x direction
-		vy?: number;  // Optional vy property for velocity in y direction
+		vx?: number;
+		vy?: number;
 	}
 
-	// Define a type for links that ensures both source and target are Nodes or strings
 	interface Link {
 		source: Node | string;
 		target: Node | string;
@@ -21,31 +19,24 @@
 	let nodes: Node[] = [];
 	let links: Link[] = [];
 
-	// Configuration for generating random clusters
-	const numClusters = 20; // Total number of clusters
-	const clusterRadius = 150; // Base radius for positioning nodes around the central node
-	const minNodesPerCluster = 3; // Minimum number of nodes per cluster
-	const maxNodesPerCluster = 20; // Maximum number of nodes per cluster
+	const numClusters = 20;
+	const clusterRadius = 150;
+	const minNodesPerCluster = 3;
+	const maxNodesPerCluster = 20;
+
+	const worldSize = 3000; // Fixed world size (width and height)
 
 	let containerWidth: number;
 	let containerHeight: number;
-	let worldWidth: number;
-	let worldHeight: number;
 
 	onMount(() => {
-		// Set the viewport dimensions
 		containerWidth = window.innerWidth;
 		containerHeight = window.innerHeight;
-
-		// Expand the world dimensions to be significantly larger than the visible area
-		worldWidth = containerWidth * 3; // Set the world width to 3 times the viewport width
-		worldHeight = containerHeight * 3; // Set the world height to 3 times the viewport height
 
 		generateRandomClusters();
 		initializeGraph();
 	});
 
-	// Function to generate random clusters
 	function generateRandomClusters() {
 		nodes = [];
 		links = [];
@@ -56,8 +47,8 @@
 			const maxAttempts = 100;
 
 			do {
-				centerX = (Math.random() * 0.6 + 0.2) * worldWidth; // Ensure clusters are within the visible range
-				centerY = (Math.random() * 0.6 + 0.2) * worldHeight; // Ensure clusters are within the visible range
+				centerX = (Math.random() * worldSize) - (worldSize / 2);
+				centerY = (Math.random() * worldSize) - (worldSize / 2);
 				attempts++;
 			} while (isTooCloseToExistingClusters(centerX, centerY) && attempts < maxAttempts);
 
@@ -67,7 +58,6 @@
 		}
 	}
 
-	// Function to check if the proposed center is too close to existing clusters
 	function isTooCloseToExistingClusters(centerX: number, centerY: number): boolean {
 		const minDistance = clusterRadius * 2;
 
@@ -82,7 +72,6 @@
 		return false;
 	}
 
-	// Function to create a cluster
 	function createCluster(clusterId: number, centerX: number, centerY: number, numNodes: number) {
 		const centralNode: Node = { id: `node-${clusterId}-A`, cluster: clusterId, x: centerX, y: centerY };
 		nodes.push(centralNode);
@@ -104,11 +93,10 @@
 	function initializeGraph() {
 		const svg = d3
 			.select<SVGSVGElement, unknown>('#splashBackgroundGraph')
-			.attr('width', worldWidth)
-			.attr('height', worldHeight);
+			.attr('width', containerWidth)
+			.attr('height', containerHeight);
 
-		const zoomGroup = svg.append('g')
-			.attr('transform', `translate(${(containerWidth - worldWidth) / 2}, ${(containerHeight - worldHeight) / 2})`);
+		const zoomGroup = svg.append('g');
 
 		simulation = d3
 			.forceSimulation<Node, Link>(nodes)
@@ -116,23 +104,21 @@
 				.id((d: Node | string) => (typeof d === 'string' ? d : d.id))
 				.distance(clusterRadius)
 			)
-			.force('charge', d3.forceManyBody().strength(-3).distanceMax(300)) // Further reduce repulsion for gentler motion
-			.force('center', d3.forceCenter(worldWidth / 2, worldHeight / 2))
+			.force('charge', d3.forceManyBody().strength(-30).distanceMax(300))
+			.force('center', d3.forceCenter(0, 0)) // Center force at (0, 0) to fit the world
 			.force('collision', d3.forceCollide<Node>()
 				.radius((node) => {
 					const numConnections = links.filter(link => (typeof link.source !== 'string' && (link.source as Node).id === node.id) || (typeof link.target !== 'string' && (link.target as Node).id === node.id)).length;
 					return 60 + numConnections * 5;
 				})
-				.strength(0.3) // Reduced collision force strength even more for smoother movement
+				.strength(0.3)
 			)
 			.force('cluster-repulsion', clusterRepulsionForce())
-			.force('x', d3.forceX(worldWidth / 2).strength(0.0002)) // Further reduce drift forces for calmer movement
-			.force('y', d3.forceY(worldHeight / 2).strength(0.0002))
-			.force('random-motion', randomMotionForce())
+			.force('x', d3.forceX().strength(0.0002))
+			.force('y', d3.forceY().strength(0.0002))
 			.alphaDecay(0)
 			.on('tick', ticked);
 
-		// Create link elements
 		const link = zoomGroup
 			.selectAll<SVGLineElement, Link>('line')
 			.data(links)
@@ -158,7 +144,6 @@
 			}
 		}
 
-		// Add zoom behavior
 		svg.call(
 			d3.zoom<SVGSVGElement, unknown>()
 				.scaleExtent([0.5, 2])
@@ -167,9 +152,8 @@
 				})
 		);
 
-		// Set initial zoom level
 		const initialTransform = d3.zoomIdentity
-			.translate(containerWidth / 2 - worldWidth / 2, containerHeight / 2 - worldHeight / 2)
+			.translate(containerWidth / 2, containerHeight / 2)
 			.scale(0.75);
 
 		svg.transition()
@@ -181,10 +165,9 @@
 			);
 	}
 
-	// Function to create a custom repulsion force between clusters
 	function clusterRepulsionForce() {
 		const clusterForce = d3.forceManyBody<Node>()
-			.strength(-30) // Reduced repulsion strength further for more gentle separation
+			.strength(-30)
 			.distanceMin(150)
 			.distanceMax(300);
 
@@ -210,16 +193,6 @@
 			});
 		};
 	}
-
-	// Function to create a random motion force for continuous movement
-	function randomMotionForce() {
-		return () => {
-			nodes.forEach((node) => {
-				node.vx = (node.vx ?? 0) + (Math.random() - 0.5) * 0.002; // Further reduce nudge for very slow motion
-				node.vy = (node.vy ?? 0) + (Math.random() - 0.5) * 0.002;
-			});
-		};
-	}
 </script>
 
 <svg id="splashBackgroundGraph" style="position: absolute; top: 0; left: 0; z-index: -1;">
@@ -227,7 +200,6 @@
 </svg>
 
 <style>
-	/* Styling to ensure the background graph takes up the full screen */
 	svg {
 		width: 100%;
 		height: 100%;
