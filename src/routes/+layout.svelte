@@ -27,7 +27,7 @@
 	<!-- Splash Page with Search Bar at Google-like height -->
 	<div class="relative w-full h-screen flex items-center justify-center">
 		<SplashGraph /> <!-- Background graph component -->
-		<div class="absolute inset-0 flex flex-col items-center" style="top: 30%;"> <!-- Adjust top to position search bar one-third down the screen -->
+		<div class="absolute inset-0 flex flex-col items-center" style="top: 33%;"> <!-- Adjust top to position search bar one-third down the screen -->
 			<h1 class="text-5xl font-bold mb-8">Flavor Database</h1> <!-- Large text above the search bar -->
 			<SearchBar on:search={onSearch} />
 		</div>
