@@ -11,14 +11,13 @@
 		chipToRemove,
 		graphNodes,
 		graphLinks,
-
 		addChip
-
 	} from '../stores';
 
 	let nodes: GraphNode[] = [];
 	let links: Link[] = [];
 	let simulation: d3.Simulation<GraphNode, undefined> | undefined;
+	let graphContainer: HTMLDivElement | null = null;
 
 	// Subscribe to stores
 	graphNodes.subscribe((value) => (nodes = value));
@@ -28,7 +27,6 @@
 		initializeGraph();
 		initializeFromGlobalState();
 
-		// Subscribe to modeCurrent to update the graph when the mode changes
 		const unsubscribeMode = modeCurrent.subscribe((isDarkMode) => {
 			updateGraph(); // Re-render the graph with the current mode's colors
 		});
@@ -53,13 +51,34 @@
 			}
 		});
 
+		// Add ResizeObserver to adjust graph size dynamically
+		const resizeObserver = new ResizeObserver(() => updateGraphSize());
+		if (graphContainer) resizeObserver.observe(graphContainer);
+
 		return () => {
-			unsubscribeMode(); // Ensure cleanup of the subscription
+			unsubscribeMode();
 			unsubscribeSearch();
 			unsubscribeChipRemove();
 			unsubscribeTab();
+			resizeObserver.disconnect();
 		};
 	});
+
+	function updateGraphSize() {
+		if (graphContainer) {
+			const width = graphContainer.clientWidth;
+			const height = window.innerHeight; // Use full viewport height
+
+			d3.select('#forceGraph')
+				.attr('width', width)
+				.attr('height', height);
+
+			if (simulation) {
+				simulation.force('center', d3.forceCenter(width / 2, height / 2)); // Center vertically on viewport height
+				simulation.alpha(1).restart();
+			}
+		}
+	}
 
 	async function initializeFromGlobalState() {
 		const terms = get(searchTerms);
@@ -71,8 +90,8 @@
 	async function recalculateGraphFromState() {
 		nodes = [];
 		links = [];
-		await initializeFromGlobalState(); // Re-fetch and re-calculate the graph
-		updateGraph(); // Redraw the graph with the updated nodes and links
+		await initializeFromGlobalState();
+		updateGraph();
 	}
 
 	async function fetchDataAndUpdate(flavor: string) {
@@ -118,8 +137,8 @@
 	function initializeGraph() {
 		if (simulation) return; // Prevent re-initialization if already initialized
 
-		const width = window.innerWidth;
-		const height = window.innerHeight;
+		const width = graphContainer?.clientWidth || window.innerWidth;
+		const height = window.innerHeight; // Use full viewport height
 
 		simulation = d3
 			.forceSimulation(nodes)
@@ -131,7 +150,7 @@
 					.distance(100)
 			)
 			.force('charge', d3.forceManyBody().strength(-500))
-			.force('center', d3.forceCenter(width / 2, height / 2));
+			.force('center', d3.forceCenter(width / 2, height / 2)); // Center the simulation
 
 		simulation.on('tick', () => {
 			d3.selectAll<SVGLineElement, Link>('line.link')
@@ -145,6 +164,8 @@
 				(d) => `translate(${d.x ?? 0}, ${d.y ?? 0})`
 			);
 		});
+
+		updateGraphSize(); // Adjust initial graph size and centering
 	}
 
 	const lightModeColors = {
@@ -344,6 +365,23 @@
 	}
 </script>
 
-<svg id="forceGraph">
-	<g></g>
-</svg>
+
+<div bind:this={graphContainer} class="graph-container">
+	<svg id="forceGraph">
+		<g></g>
+	</svg>
+</div>
+
+<style>
+	.graph-container {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center; /* Ensures vertical centering within the container */
+	}
+
+	svg {
+		display: block; /* Prevents unwanted margin */
+	}
+</style>

@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	export let leftInitialSize = '75%';
 
 	let left: HTMLDivElement | null = null;
 	let isDragging = false;
+
+	// Create an event dispatcher
+	const dispatch = createEventDispatcher();
 
 	function dragstart(event: MouseEvent) {
 		event.preventDefault();
@@ -25,6 +29,9 @@
 		} else {
 			left.style.width = `${newLeftWidth}%`;
 		}
+
+		// Dispatch a resize event with the new width
+		dispatch('resize', { width: left.style.width });
 	}
 
 	function dragend() {
