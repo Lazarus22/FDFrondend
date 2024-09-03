@@ -12,7 +12,7 @@
 	import SplashGraph from '../components/SplashGraph.svelte';
 
 	let tabSet: number = 0;
-	let splitPaneEnabled = false;
+	let splitPaneEnabled = true; // Set to true for default split view
 	let hasSearched = false;
 
 	// Set up Floating UI for popup functionality

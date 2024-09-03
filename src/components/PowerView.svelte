@@ -7,7 +7,7 @@
 
 	let isLoading = false;
 	let hasResults = false;
-	let hasSearched = false; // Track if a search has been performed
+	let hasSearched = false;
 
 	// Derive results from searchTerms and searchResultsMap
 	const results: Readable<Array<{ set: string[]; nodes: string[] }>> = derived(
@@ -146,11 +146,6 @@
 		searchQuery.set(node);
 	}
 
-	// Function to handle chip removal in PowerView
-	function handleRemoveChip(chip: string) {
-		searchTerms.update((terms) => terms.filter((term) => term !== chip));
-		chipToRemove.set(chip); // Trigger the chip removal in Graph
-	}
 </script>
 
 <div class="results-wrapper">
@@ -159,8 +154,11 @@
 	{:else if hasSearched && !hasResults}
 		<p>No results found.</p>
 	{:else if hasResults}
-		<!-- Unwrap the derived store using $results before passing it as a prop -->
-		<ResultList results={$results} onItemClick={handleNodeClick} />
+		<!-- Pass the results and onItemClick prop -->
+		<ResultList
+			results={$results}
+			onItemClick={handleNodeClick}
+		/>
 	{/if}
 </div>
 
