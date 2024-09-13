@@ -19,7 +19,9 @@
 		if (!isDragging || !left) return;
 
 		const containerWidth = left.parentElement?.offsetWidth || 0;
-		const newLeftWidth = (event.clientX - (left.parentElement?.getBoundingClientRect().left || 0)) / containerWidth * 100;
+		const newLeftWidth =
+			((event.clientX - (left.parentElement?.getBoundingClientRect().left || 0)) / containerWidth) *
+			100;
 
 		// Ensure the panes don't collapse
 		if (newLeftWidth < 10) {
@@ -45,11 +47,7 @@
 	<div bind:this={left} class="left-pane" style="width: {leftInitialSize};">
 		<slot name="left" />
 	</div>
-	<button 
-		class="splitter" 
-		aria-label="Resize panel" 
-		on:mousedown={dragstart}
-	></button>
+	<button class="splitter" aria-label="Resize panel" on:mousedown={dragstart}></button>
 	<div class="right-pane">
 		<slot name="right" />
 	</div>
@@ -59,7 +57,7 @@
 	.split-pane {
 		display: flex;
 		width: 100%;
-		height: 100vh; 
+		height: 100vh;
 	}
 
 	.left-pane {

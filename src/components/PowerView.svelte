@@ -31,7 +31,8 @@
 
 		// Listen to the active tab and re-initialize when switching to the PowerView tab
 		const unsubscribeTab = activeTab.subscribe((tab) => {
-			if (tab === 1) { // Assuming 1 is the index for the PowerView (List) tab
+			if (tab === 1) {
+				// Assuming 1 is the index for the PowerView (List) tab
 				initializePowerView(); // Re-initialize PowerView
 				initializeFromGlobalState(); // Re-fetch data if necessary
 			}
@@ -99,10 +100,9 @@
 
 		function getAllSubsets(arr: string[]): string[][] {
 			return arr
-				.reduce<string[][]>(
-					(subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])),
-					[[]]
-				)
+				.reduce<
+					string[][]
+				>((subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])), [[]])
 				.filter((subset) => subset.length > 0);
 		}
 
@@ -145,7 +145,6 @@
 		// Trigger a search with the clicked node
 		searchQuery.set(node);
 	}
-
 </script>
 
 <div class="results-wrapper">
@@ -155,10 +154,7 @@
 		<p>No results found.</p>
 	{:else if hasResults}
 		<!-- Pass the results and onItemClick prop -->
-		<ResultList
-			results={$results}
-			onItemClick={handleNodeClick}
-		/>
+		<ResultList results={$results} onItemClick={handleNodeClick} />
 	{/if}
 </div>
 

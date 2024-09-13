@@ -69,9 +69,7 @@
 			const width = graphContainer.clientWidth;
 			const height = window.innerHeight; // Use full viewport height
 
-			d3.select('#forceGraph')
-				.attr('width', width)
-				.attr('height', height);
+			d3.select('#forceGraph').attr('width', width).attr('height', height);
 
 			if (simulation) {
 				simulation.force('center', d3.forceCenter(width / 2, height / 2)); // Center vertically on viewport height
@@ -242,90 +240,95 @@
 	}
 
 	function updateGraph() {
-    const isDarkMode = get(modeCurrent); // Get the current mode
+		const isDarkMode = get(modeCurrent); // Get the current mode
 
-    const currentEdgeColorMap = isDarkMode ? darkModeColors.edge : lightModeColors.edge;
-    const currentNodeColorMap = isDarkMode ? darkModeColors.node : lightModeColors.node;
-    const currentTextColor = isDarkMode ? lightModeColors.text : darkModeColors.text;
+		const currentEdgeColorMap = isDarkMode ? darkModeColors.edge : lightModeColors.edge;
+		const currentNodeColorMap = isDarkMode ? darkModeColors.node : lightModeColors.node;
+		const currentTextColor = isDarkMode ? lightModeColors.text : darkModeColors.text;
 
-    const svg = d3
-        .select<SVGSVGElement, unknown>('#forceGraph')
-        .attr('width', window.innerWidth)
-        .attr('height', window.innerHeight);
+		const svg = d3
+			.select<SVGSVGElement, unknown>('#forceGraph')
+			.attr('width', window.innerWidth)
+			.attr('height', window.innerHeight);
 
-    const zoomGroup = svg.select<SVGGElement>('g');
+		const zoomGroup = svg.select<SVGGElement>('g');
 
-    // Clear existing elements to force redraw with new colors
-    zoomGroup.selectAll('*').remove();
+		// Clear existing elements to force redraw with new colors
+		zoomGroup.selectAll('*').remove();
 
-    // Draw the lines (links) first
-    zoomGroup
-        .selectAll<SVGLineElement, Link>('line')
-        .data(links, (d: any) => `${(d.source as GraphNode).name}-${(d.target as GraphNode).name}`)
-        .join('line')
-        .attr('class', 'link')
-        .attr('stroke-width', .4)
-        .attr('stroke', (d) => currentEdgeColorMap[d.strength as keyof typeof currentEdgeColorMap] || '#ccc');
+		// Draw the lines (links) first
+		zoomGroup
+			.selectAll<SVGLineElement, Link>('line')
+			.data(links, (d: any) => `${(d.source as GraphNode).name}-${(d.target as GraphNode).name}`)
+			.join('line')
+			.attr('class', 'link')
+			.attr('stroke-width', 0.4)
+			.attr(
+				'stroke',
+				(d) => currentEdgeColorMap[d.strength as keyof typeof currentEdgeColorMap] || '#ccc'
+			);
 
-    // Draw the nodes and text labels after the lines (links)
-    zoomGroup
-        .selectAll<SVGGElement, GraphNode>('g.node')
-        .data(nodes, (d: any) => d.name)
-        .join(
-            (enter) => {
-                const g = enter
-                    .append('g')
-                    .attr('class', 'node')
-                    .call(
-                        d3
-                            .drag<SVGGElement, GraphNode>()
-                            .on('start', dragStarted)
-                            .on('drag', dragged)
-                            .on('end', dragEnded)
-                    );
+		// Draw the nodes and text labels after the lines (links)
+		zoomGroup
+			.selectAll<SVGGElement, GraphNode>('g.node')
+			.data(nodes, (d: any) => d.name)
+			.join(
+				(enter) => {
+					const g = enter
+						.append('g')
+						.attr('class', 'node')
+						.call(
+							d3
+								.drag<SVGGElement, GraphNode>()
+								.on('start', dragStarted)
+								.on('drag', dragged)
+								.on('end', dragEnded)
+						);
 
-                g.append('path')
-                    .attr('d', hexagonPath(hexagonPoints)!)
-                    .attr('fill', (d) => currentNodeColorMap[d.nodeType as keyof typeof currentNodeColorMap] || '#fee07e');
+					g.append('path')
+						.attr('d', hexagonPath(hexagonPoints)!)
+						.attr(
+							'fill',
+							(d) =>
+								currentNodeColorMap[d.nodeType as keyof typeof currentNodeColorMap] || '#fee07e'
+						);
 
-                g.append('text')
-                    .text((d) => d.name)
-                    .attr('x', 6)
-                    .attr('y', 3)
-                    .attr('font-size', '12px')
-                    .attr('font-family', 'Arial, Helvetica, sans-serif')
-                    .attr('fill', currentTextColor)
-                    .attr('pointer-events', 'all')  // Ensure the text can receive click events
-                    .on('click', (event, d) => {
-                        addChip(d.name); // Add the clicked node's name as a chip
-                    });
+					g.append('text')
+						.text((d) => d.name)
+						.attr('x', 6)
+						.attr('y', 3)
+						.attr('font-size', '12px')
+						.attr('font-family', 'Arial, Helvetica, sans-serif')
+						.attr('fill', currentTextColor)
+						.attr('pointer-events', 'all') // Ensure the text can receive click events
+						.on('click', (event, d) => {
+							addChip(d.name); // Add the clicked node's name as a chip
+						});
 
-                return g;
-            },
-            (update) => update,
-            (exit) => exit.remove()
-        );
+					return g;
+				},
+				(update) => update,
+				(exit) => exit.remove()
+			);
 
-    zoomGroup.selectAll('g.node').raise();
+		zoomGroup.selectAll('g.node').raise();
 
-    svg.call(
-        d3
-            .zoom<SVGSVGElement, unknown>()
-            .scaleExtent([0.1, 10])
-            .on('zoom', (event) => zoomGroup.attr('transform', event.transform))
-    );
+		svg.call(
+			d3
+				.zoom<SVGSVGElement, unknown>()
+				.scaleExtent([0.1, 10])
+				.on('zoom', (event) => zoomGroup.attr('transform', event.transform))
+		);
 
-    if (simulation) {
-        simulation.nodes(nodes);
-        const linkForce = simulation.force<d3.ForceLink<GraphNode, Link>>('link');
-        if (linkForce) {
-            linkForce.links(links);
-        }
-        simulation.alpha(1).restart();
-    }
-}
-
-
+		if (simulation) {
+			simulation.nodes(nodes);
+			const linkForce = simulation.force<d3.ForceLink<GraphNode, Link>>('link');
+			if (linkForce) {
+				linkForce.links(links);
+			}
+			simulation.alpha(1).restart();
+		}
+	}
 
 	function removeChip(event: { detail: { chipValue: string } }) {
 		const chip = event.detail.chipValue;
@@ -364,7 +367,6 @@
 		updateGraph();
 	}
 </script>
-
 
 <div bind:this={graphContainer} class="graph-container">
 	<svg id="forceGraph">

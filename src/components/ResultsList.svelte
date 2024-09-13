@@ -14,11 +14,16 @@
 	}
 
 	function toggleItem(index: number) {
-		openIndex.update(current => (current === index ? null : index)); // Toggle item open or close
+		openIndex.update((current) => (current === index ? null : index)); // Toggle item open or close
 	}
 </script>
 
-<Accordion spacing="space-y-2" width="w-full" rounded="rounded-md" hover="hover:bg-primary-hover-token">
+<Accordion
+	spacing="space-y-2"
+	width="w-full"
+	rounded="rounded-md"
+	hover="hover:bg-primary-hover-token"
+>
 	{#each results as { set, nodes }, index (set.join(', '))}
 		<AccordionItem open={$openIndex === index} on:click={() => toggleItem(index)}>
 			<svelte:fragment slot="summary">

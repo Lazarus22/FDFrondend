@@ -47,13 +47,15 @@
 			const maxAttempts = 100;
 
 			do {
-				centerX = (Math.random() * worldSize) - (worldSize / 2);
-				centerY = (Math.random() * worldSize) - (worldSize / 2);
+				centerX = Math.random() * worldSize - worldSize / 2;
+				centerY = Math.random() * worldSize - worldSize / 2;
 				attempts++;
 			} while (isTooCloseToExistingClusters(centerX, centerY) && attempts < maxAttempts);
 
 			const clusterId = i + 1;
-			const numNodes = Math.floor(Math.random() * (maxNodesPerCluster - minNodesPerCluster + 1)) + minNodesPerCluster;
+			const numNodes =
+				Math.floor(Math.random() * (maxNodesPerCluster - minNodesPerCluster + 1)) +
+				minNodesPerCluster;
 			createCluster(clusterId, centerX, centerY, numNodes);
 		}
 	}
@@ -73,11 +75,16 @@
 	}
 
 	function createCluster(clusterId: number, centerX: number, centerY: number, numNodes: number) {
-		const centralNode: Node = { id: `node-${clusterId}-A`, cluster: clusterId, x: centerX, y: centerY };
+		const centralNode: Node = {
+			id: `node-${clusterId}-A`,
+			cluster: clusterId,
+			x: centerX,
+			y: centerY
+		};
 		nodes.push(centralNode);
 
 		for (let i = 0; i < numNodes; i++) {
-			const angle = (2 * Math.PI / numNodes) * i;
+			const angle = ((2 * Math.PI) / numNodes) * i;
 			const distanceFromCenter = clusterRadius + numNodes * 5;
 			const x = centerX + distanceFromCenter * Math.cos(angle);
 			const y = centerY + distanceFromCenter * Math.sin(angle);
@@ -101,7 +108,7 @@
 		// Introduce a gentler wind-like force by reducing the strength
 		function windForce() {
 			const windStrength = 0.0005; // Smaller value for more subtle movement
-			const windDirectionX = 0.05;  // Lower horizontal wind effect
+			const windDirectionX = 0.05; // Lower horizontal wind effect
 			const windDirectionY = 0.025; // Lower vertical wind effect
 
 			nodes.forEach((node) => {
@@ -112,23 +119,29 @@
 
 		simulation = d3
 			.forceSimulation<Node, Link>(nodes)
-			.force('link', d3.forceLink<Node, Link>(links)
-				.id((d: Node | string) => (typeof d === 'string' ? d : d.id))
-				.distance(clusterRadius)  // Set a fixed distance
-				.strength(1)  // Make link force strong enough to maintain the distance
+			.force(
+				'link',
+				d3
+					.forceLink<Node, Link>(links)
+					.id((d: Node | string) => (typeof d === 'string' ? d : d.id))
+					.distance(clusterRadius) // Set a fixed distance
+					.strength(1) // Make link force strong enough to maintain the distance
 			)
-			.force('charge', d3.forceManyBody().strength(-5).distanceMax(500))  // Even less aggressive repulsion
-			.force('center', d3.forceCenter(0, 0))  // Center force at (0, 0)
-			.force('collision', d3.forceCollide<Node>()
-				.radius(clusterRadius + 20)  // Set collision radius slightly larger than cluster radius
-				.strength(0.05)  // Lower strength for gentler collisions
+			.force('charge', d3.forceManyBody().strength(-5).distanceMax(500)) // Even less aggressive repulsion
+			.force('center', d3.forceCenter(0, 0)) // Center force at (0, 0)
+			.force(
+				'collision',
+				d3
+					.forceCollide<Node>()
+					.radius(clusterRadius + 20) // Set collision radius slightly larger than cluster radius
+					.strength(0.05) // Lower strength for gentler collisions
 			)
 			.force('x', d3.forceX().strength(0.00005))
 			.force('y', d3.forceY().strength(0.00005))
-			.force('wind', windForce)  // Apply the gentler wind-like force
+			.force('wind', windForce) // Apply the gentler wind-like force
 			.alpha(0.2)
-			.alphaDecay(0.005)  // Slower decay for gentle continuous movement
-			.alphaTarget(0.02)  // Lower target alpha for subtler movement
+			.alphaDecay(0.005) // Slower decay for gentle continuous movement
+			.alphaTarget(0.02) // Lower target alpha for subtler movement
 			.on('tick', ticked);
 
 		const link = zoomGroup
@@ -141,14 +154,31 @@
 
 		function ticked() {
 			link
-				.attr('x1', (d) => (typeof d.source !== 'string' ? (d.source as Node).x : nodes.find(n => n.id === d.source)?.x ?? 0))
-				.attr('y1', (d) => (typeof d.source !== 'string' ? (d.source as Node).y : nodes.find(n => n.id === d.source)?.y ?? 0))
-				.attr('x2', (d) => (typeof d.target !== 'string' ? (d.target as Node).x : nodes.find(n => n.id === d.target)?.x ?? 0))
-				.attr('y2', (d) => (typeof d.target !== 'string' ? (d.target as Node).y : nodes.find(n => n.id === d.target)?.y ?? 0));
+				.attr('x1', (d) =>
+					typeof d.source !== 'string'
+						? (d.source as Node).x
+						: (nodes.find((n) => n.id === d.source)?.x ?? 0)
+				)
+				.attr('y1', (d) =>
+					typeof d.source !== 'string'
+						? (d.source as Node).y
+						: (nodes.find((n) => n.id === d.source)?.y ?? 0)
+				)
+				.attr('x2', (d) =>
+					typeof d.target !== 'string'
+						? (d.target as Node).x
+						: (nodes.find((n) => n.id === d.target)?.x ?? 0)
+				)
+				.attr('y2', (d) =>
+					typeof d.target !== 'string'
+						? (d.target as Node).y
+						: (nodes.find((n) => n.id === d.target)?.y ?? 0)
+				);
 		}
 
 		svg.call(
-			d3.zoom<SVGSVGElement, unknown>()
+			d3
+				.zoom<SVGSVGElement, unknown>()
 				.scaleExtent([0.5, 2])
 				.on('zoom', (event) => {
 					zoomGroup.attr('transform', event.transform);
@@ -159,13 +189,10 @@
 			.translate(containerWidth / 2, containerHeight / 2)
 			.scale(0.75);
 
-		svg.transition()
+		svg
+			.transition()
 			.duration(750)
-			.call(
-				d3.zoom<SVGSVGElement, unknown>()
-					.transform,
-				initialTransform
-			);
+			.call(d3.zoom<SVGSVGElement, unknown>().transform, initialTransform);
 	}
 </script>
 
