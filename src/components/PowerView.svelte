@@ -93,46 +93,63 @@
 	}
 
 	function computeResults(
-		terms: string[],
-		resultsMap: Map<string, string[]>
-	): Array<{ set: string[]; nodes: string[] }> {
-		const results: Array<{ set: string[]; nodes: string[] }> = [];
+    terms: string[],
+    resultsMap: Map<string, string[]>
+): Array<{ set: string[]; nodes: string[] }> {
+    const results: Array<{ set: string[]; nodes: string[] }> = [];
 
-		function getAllSubsets(arr: string[]): string[][] {
-			return arr
-				.reduce<
-					string[][]
-				>((subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])), [[]])
-				.filter((subset) => subset.length > 0);
-		}
+    function getAllSubsets(arr: string[]): string[][] {
+        return arr
+            .reduce<string[][]>(
+                (subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])),
+                [[]]
+            )
+            .filter((subset) => subset.length > 0);
+    }
 
-		const subsets = getAllSubsets(terms);
+    const subsets = getAllSubsets(terms);
 
-		subsets.forEach((subset) => {
-			let commonNodes: Set<string> | null = null;
+    // To keep track of assigned nodes
+    const assignedNodes = new Set<string>();
 
-			subset.forEach((term) => {
-				const nodes = new Set<string>(resultsMap.get(term) || []);
-				if (commonNodes === null) {
-					commonNodes = nodes;
-				} else {
-					commonNodes = new Set([...commonNodes].filter((node) => nodes.has(node)));
-				}
-			});
+    // Sort subsets by length in descending order, so larger subsets (e.g., AB, ABC) are handled first
+    subsets.sort((a, b) => b.length - a.length);
 
-			// Type assertion to ensure commonNodes is treated as Set<string>
-			if (commonNodes && (commonNodes as Set<string>).size > 0) {
-				results.push({
-					set: [...subset].sort(),
-					nodes: Array.from(commonNodes) as string[] // Explicitly cast to string[]
-				});
-			}
-		});
+    subsets.forEach((subset) => {
+        let commonNodes: Set<string> | null = null;
 
-		results.sort((a, b) => b.set.length - a.set.length);
+        // Find common nodes for the current subset
+        subset.forEach((term) => {
+            const nodes = new Set<string>(resultsMap.get(term) || []);
+            if (commonNodes === null) {
+                commonNodes = nodes;
+            } else {
+                commonNodes = new Set([...commonNodes].filter((node) => nodes.has(node)));
+            }
+        });
 
-		return results;
-	}
+        // Remove already assigned nodes from commonNodes
+        if (commonNodes) {
+            commonNodes = new Set([...commonNodes].filter((node) => !assignedNodes.has(node)));
+        }
+
+        // If there are nodes left after removing assigned ones, add to results
+        if (commonNodes && commonNodes.size > 0) {
+            const sortedSubset = [...subset].sort();
+            results.push({
+                set: sortedSubset,
+                nodes: Array.from(commonNodes) as string[], // Cast to string[]
+            });
+
+            // Mark nodes as assigned
+            commonNodes.forEach((node) => assignedNodes.add(node));
+        }
+    });
+
+    return results;
+}
+
+
 
 	function handleNodeClick(node: string) {
 		searchTerms.update((terms) => {
