@@ -5,7 +5,7 @@
 	export let results: Array<{ set: string[]; nodes: string[] }>;
 	export let onItemClick: (node: string) => void;
 
-	let openIndex = writable<number | null>(0); // Track the open index, starting with the first item open
+	let openIndex = writable<number | null>(0); // Track the open index
 
 	function handleItemClick(node: string) {
 		if (typeof onItemClick === 'function') {
@@ -35,8 +35,7 @@
 						<li class="nested-item">
 							<button
 								on:click={() => handleItemClick(node)}
-								on:keydown={(e) => e.key === 'Enter' && handleItemClick(node)}
-								class="node-button w-full text-left hover:bg-primary-hover-token rounded-md px-4 py-2 transition duration-150 ease-in-out"
+								class="node-button w-full text-left hover:bg-primary-hover-token rounded-md px-4 py-2"
 							>
 								<span>{i < nodes.length - 1 ? '├── ' : '└── '}{node}</span>
 							</button>
@@ -49,23 +48,15 @@
 </Accordion>
 
 <style>
-	.list {
-		list-style-type: none;
-		padding: 0;
-		margin: 0;
-	}
-
+	.list,
 	.nested-list {
 		list-style-type: none;
 		padding: 0;
 		margin: 0;
-		font-family: var(--font-family-mono);
 	}
-
 	.nested-item {
-		padding-left: 20px; /* Indent nested items */
+		padding-left: 20px;
 	}
-
 	.node-button {
 		background: none;
 		border: none;
@@ -73,7 +64,5 @@
 		padding: 5px 0;
 		width: 100%;
 		text-align: left;
-		font-family: inherit;
-		font-size: inherit;
 	}
 </style>
