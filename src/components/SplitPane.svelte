@@ -44,35 +44,35 @@
 </script>
 
 <div class="split-pane" role="group">
-	<div bind:this={left} class="left-pane" style="width: {leftInitialSize};">
-		<slot name="left" />
-	</div>
-	<button class="splitter" aria-label="Resize panel" on:mousedown={dragstart}></button>
-	<div class="right-pane">
-		<slot name="right" />
-	</div>
+  <div bind:this={left} class="left-pane" style="width: {leftInitialSize};">
+    <slot name="left" />
+  </div>
+  <button class="splitter" aria-label="Resize panel" on:mousedown={dragstart}></button>
+  <div class="right-pane">
+    <slot name="right" />
+  </div>
 </div>
 
 <style>
-	.split-pane {
-		display: flex;
-		width: 100%;
-		height: 100vh;
-	}
+  .split-pane {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
 
-	.left-pane {
-		background-color: var(--skeleton-surface);
-		height: 100%;
-		overflow: hidden;
-		user-select: none;
-	}
+  .left-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-	.right-pane {
-		background-color: var(--skeleton-surface);
-		flex-grow: 1;
-		height: 100%;
-		overflow-y: auto;
-	}
+  .right-pane {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
 
 	.splitter {
 		width: 5px;

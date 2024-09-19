@@ -48,21 +48,24 @@
 </Accordion>
 
 <style>
-	.list,
-	.nested-list {
-		list-style-type: none;
-		padding: 0;
-		margin: 0;
-	}
-	.nested-item {
-		padding-left: 20px;
-	}
-	.node-button {
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 5px 0;
-		width: 100%;
-		text-align: left;
-	}
+  .list,
+  .nested-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0; /* Ensure margin is set to 0 */
+  }
+
+  .nested-item {
+    padding-left: 20px;
+    margin-bottom: 0; /* Ensure no bottom margin */
+  }
+
+  .node-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px 0;
+    width: 100%;
+    text-align: left;
+  }
 </style>

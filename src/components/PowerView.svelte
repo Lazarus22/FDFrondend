@@ -162,23 +162,27 @@
 </script>
 
 <div class="results-wrapper">
-	{#if isLoading}
-		<p>Loading...</p>
-	{:else if hasSearched && !hasResults}
-		<p>No results found.</p>
-	{:else if hasResults}
-		<!-- Pass the results and onItemClick prop -->
-		<ResultList results={$results} onItemClick={handleNodeClick} />
-	{/if}
+  {#if isLoading}
+    <p>Loading...</p>
+  {:else if hasSearched && !hasResults}
+    <p>No results found.</p>
+  {:else if hasResults}
+    <ResultList results={$results} onItemClick={handleNodeClick} />
+  {/if}
 </div>
 
 <style>
-	.results-wrapper {
-		padding: 20px;
-	}
+  .results-wrapper {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
 
-	p {
-		font-size: 1.2em;
-		text-align: center;
-	}
+  p {
+    font-size: 1.2em;
+    text-align: center;
+  }
+
+  /* Rest of your styles */
 </style>
