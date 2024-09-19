@@ -59,14 +59,17 @@
 <Analytics />
 
 {#if !hasSearched}
-	<!-- Splash Page with Search Bar -->
-	<div class="relative w-full h-screen flex items-center justify-center">
-		<SplashGraph /> <!-- Background graph component -->
-		<div class="absolute inset-0 flex flex-col items-center" style="top: 33%;">
-			<h1 class="text-5xl font-bold mb-8">Flavor Database</h1>
-			<SearchBar on:search={onSearch} />
-		</div>
-	</div>
+    <!-- Splash Page with Search Bar -->
+    <div class="relative w-full h-screen flex items-center justify-center">
+        <SplashGraph /> <!-- Background graph component -->
+        <div class="absolute inset-0 flex flex-col items-center" style="top: 33%;">
+            <h1 class="text-5xl font-bold mb-8">
+                <span class="text-blue-600 dark:text-[#bcdef2]">Flavor</span>
+                <span class="text-red-600 dark:text-[#d96960]">Database</span>
+            </h1>
+            <SearchBar on:search={onSearch} />
+        </div>
+    </div>
 {:else}
 	<!-- Main Page Content -->
 	<div class="fixed top-5 right-5 z-50 flex flex-col items-end space-y-4">
