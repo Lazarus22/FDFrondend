@@ -174,16 +174,34 @@
 <style>
   .results-wrapper {
     flex: 1 1 auto;
-    overflow-y: auto;
+    overflow-y: auto; /* Ensure content can overflow and scroll */
     display: flex;
     flex-direction: column;
+    max-height: 100%; /* Ensure it can grow and shrink with its parent */
   }
-
 
   p {
     font-size: 1.2em;
     text-align: center;
   }
 
-  /* Rest of your styles */
+  /* Ensure the parent containers fill available height */
+  :global(html, body) {
+    height: 100%; /* Set height to 100% to make sure all parents grow */
+  }
+
+  :global(#app) {
+    height: 100%; /* Set the main app container height to full screen */
+  }
 </style>
+
+<div class="results-wrapper">
+  {#if isLoading}
+    <p>Loading...</p>
+  {:else if hasSearched && !hasResults}
+    <p>No results found.</p>
+  {:else if hasResults}
+    <ResultList results={$results} onItemClick={handleNodeClick} />
+  {/if}
+</div>
+

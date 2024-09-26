@@ -19,8 +19,8 @@
 	// Set up Floating UI for popup functionality
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
-	// Detect mobile device and adjust view accordingly
 	onMount(() => {
+		// Apply smoothscroll polyfill first
 		smoothscroll.polyfill();
 
 		// Check if the user is on a mobile device (screen width < 768px)
@@ -44,19 +44,11 @@
 		}
 	});
 
-	// Update localStorage whenever modeUserPrefers changes
+	// Reapply smoothscroll polyfill when switching views
 	$: {
-		if (typeof window !== 'undefined' && $modeUserPrefers !== undefined) {
-			localStorage.setItem('userPrefersDark', $modeUserPrefers.toString());
-		}
-	}
-
-	$: {
-		if (typeof window !== 'undefined' && $modeCurrent !== undefined && $modeUserPrefers !== undefined) {
-			if ($modeCurrent !== $modeUserPrefers) {
-				setModeUserPrefers($modeCurrent);
-				localStorage.setItem('userPrefersDark', $modeCurrent.toString());
-			}
+		// Reapply polyfill when switching from split view to list view
+		if (!splitPaneEnabled || tabSet === 1) {
+			smoothscroll.polyfill();  // Ensure smooth scroll is working when list view is active
 		}
 	}
 
@@ -64,7 +56,6 @@
 		hasSearched = true;
 	}
 </script>
-
 
 <!-- Ensure Analytics is always mounted -->
 <Analytics />
