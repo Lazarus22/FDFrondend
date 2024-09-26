@@ -137,17 +137,21 @@
 		}
 	}
 
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
-			event.preventDefault();
-			handleChipAdd(new CustomEvent('add', { detail: { chipValue: inputText.trim() } }));
-			inputText = '';
-			autoCompleteOptions = [];
-			autoCompleteResults.set([]);
-			showPopup = false;
-			logPopupState();
-		}
-	}
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      // If autocomplete is open, do not handle Enter key here
+      if (showPopup) {
+        return;
+      }
+      event.preventDefault();
+      handleChipAdd(new CustomEvent('add', { detail: { chipValue: inputText.trim() } }));
+      inputText = '';
+      autoCompleteOptions = [];
+      autoCompleteResults.set([]);
+      showPopup = false;
+      logPopupState();
+    }
+  }
 
 	function handleRemove(event: CustomEvent<{ chipValue: string }>) {
 		const chip = event.detail.chipValue;
@@ -168,38 +172,34 @@
 </script>
 
 <div class="w-full max-w-sm relative input-chip-container">
-	<InputChip
-		bind:input={inputText}
-		bind:value={searchChips}
-		name="search"
-		placeholder="Search..."
-		on:keydown={handleKeydown}
-		on:remove={handleRemove}
-		on:add={handleChipAdd}
-	/>
+  <InputChip
+    bind:input={inputText}
+    bind:value={searchChips}
+    name="search"
+    placeholder="Search..."
+    on:keydown={handleKeydown}
+    on:remove={handleRemove}
+    on:add={handleChipAdd}
+  />
 
-	{#if showPopup}
-		<div
-			use:popup={popupSettings}
-			data-popup="popupAutocomplete"
-			class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
-			tabindex="0"
-			role="button"
-			on:click={() => {}}
-			on:keydown={(event) => {
-				if (event.key === 'Enter' || event.key === ' ') {
-					event.preventDefault();
-				}
-			}}
-		>
-			<Autocomplete
-				bind:input={inputText}
-				options={autoCompleteOptions}
-				denylist={searchChips}
-				on:selection={handleAutocompleteSelect}
-			/>
-		</div>
-	{/if}
+  {#if showPopup}
+    <div
+      use:popup={popupSettings}
+      data-popup="popupAutocomplete"
+      class="card w-full max-w-sm max-h-48 p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="autocomplete-label"
+    >
+      <h2 id="autocomplete-label" class="sr-only">Autocomplete</h2>
+      <Autocomplete
+        bind:input={inputText}
+        options={autoCompleteOptions}
+        denylist={searchChips}
+        on:selection={handleAutocompleteSelect}
+      />
+    </div>
+  {/if}
 </div>
 
 <style>
