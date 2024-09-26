@@ -179,6 +179,7 @@
     flex-direction: column;
   }
 
+
   p {
     font-size: 1.2em;
     text-align: center;

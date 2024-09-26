@@ -4,6 +4,7 @@
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
 	import { storePopup, setModeUserPrefers, modeUserPrefers, setModeCurrent, modeCurrent } from '@skeletonlabs/skeleton';
 	import { LightSwitch, SlideToggle, TabGroup, Tab } from '@skeletonlabs/skeleton';
+	import smoothscroll from 'smoothscroll-polyfill';
 	import Graph from '../components/Graph.svelte';
 	import PowerView from '../components/PowerView.svelte';
 	import SearchBar from '../components/SearchBar.svelte';
@@ -19,6 +20,7 @@
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
 	onMount(() => {
+		smoothscroll.polyfill();
 		if (typeof window !== 'undefined') {
 			const storedPref = localStorage.getItem('userPrefersDark');
 			if (storedPref !== null) {
