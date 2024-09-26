@@ -117,6 +117,7 @@
 			});
 		}
 
+
 		simulation = d3
 			.forceSimulation<Node, Link>(nodes)
 			.force(
