@@ -12,15 +12,23 @@
 	import Analytics from '../components/Analytics.svelte';
 	import SplashGraph from '../components/SplashGraph.svelte';
 
-	let tabSet = 0;
-	let splitPaneEnabled = true; // Set to true for default split view
+	let tabSet = 0;  // Default to 0 (Graph)
+	let splitPaneEnabled = true;  // Set to true for default split view
 	let hasSearched = false;
 
 	// Set up Floating UI for popup functionality
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
+	// Detect mobile device and adjust view accordingly
 	onMount(() => {
 		smoothscroll.polyfill();
+
+		// Check if the user is on a mobile device (screen width < 768px)
+		if (window.innerWidth < 768) {
+			splitPaneEnabled = false;  // Disable split view on mobile
+			tabSet = 1;  // Switch to "List" view
+		}
+
 		if (typeof window !== 'undefined') {
 			const storedPref = localStorage.getItem('userPrefersDark');
 			if (storedPref !== null) {
@@ -56,6 +64,7 @@
 		hasSearched = true;
 	}
 </script>
+
 
 <!-- Ensure Analytics is always mounted -->
 <Analytics />
